@@ -49,7 +49,6 @@
             ':*',
             ':+',
             '@include',
-            '@builtin',
             '@',
             ']',
         ]),
@@ -95,8 +94,7 @@ prod -> word _ %arrow _ expression+  {% d => ({name: d[0], rules: d[4]}) %}
       | word "[" _ wordlist _ "]" _ %arrow _ expression+ {% d => ({macro: d[0], args: d[3], exprs: d[9]}) %}
       | "@" _ js  {% ([_a, _b, c]) => ({body: c}) %}
       | "@" word ws word  {% d => ({config: d[1], value: d[3]}) %}
-      | "@include"  _ string {% ([_a, _b, {literal}]) => ({include: literal, builtin: false}) %}
-      | "@builtin"  _ string {% ([_a, _b, {literal}]) => ({include: literal, builtin: true }) %}
+      | "@include"  _ string {% ([_a, _b, {literal}]) => ({include: literal}) %}
 
 expression+ -> completeexpression
              | expression+ _ "|" _ completeexpression  {% d => [...d[0], d[4]] %}
