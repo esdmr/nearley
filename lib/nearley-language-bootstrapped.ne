@@ -1,123 +1,122 @@
 # nearley grammar
 @{%
-function getValue(d) {
-    return d[0].value
-}
+    import moo from 'moo';
 
-function literals(list) {
-    var rules = {}
-    for (var lit of list) {
-        rules[lit] = {match: lit, next: 'main'}
+    function getValue([{value}]) {
+        return value;
     }
-    return rules
-}
 
-import moo from 'moo';
-
-var rules = Object.assign({
-    ws: {match: /\s+/, lineBreaks: true, next: 'main'},
-    comment: /\#.*/,
-    arrow: {match: /[=-]+\>/, next: 'main'},
-    js: {
-        match: /\{\%(?:[^%]|\%[^}])*\%\}/,
-        value: x => x.slice(2, -2),
-        lineBreaks: true,
-    },
-    word: {match: /[\w\?\+]+/, next: 'afterWord'},
-    string: {
-        match: /"(?:[^\\"\n]|\\["\\/bfnrt]|\\u[a-fA-F0-9]{4})*"/,
-        value: x => JSON.parse(x),
-        next: 'main',
-    },
-    btstring: {
-        match: /`[^`]*`/,
-        value: x => x.slice(1, -1),
-        next: 'main',
-        lineBreaks: true,
-    },
-}, literals([
-    ",", "|", "$", "%", "(", ")",
-    ":?", ":*", ":+",
-    "@include", "@builtin", "@",
-    "]",
-]))
-
-var lexer = moo.states({
-    main: Object.assign({}, rules, {
-        charclass: {
-            match: /\.|\[(?:\\.|[^\\\n])+?\]/,
-            value: x => new RegExp(x),
-        },
-    }),
-    // Both macro arguments and charclasses are both enclosed in [ ].
-    // We disambiguate based on whether the previous token was a `word`.
-    afterWord: Object.assign({}, rules, {
-        "[": {match: "[", next: 'main'},
-    }),
-})
-
-function insensitive(sl) {
-    var s = sl.literal;
-    var result = [];
-    for (var i=0; i<s.length; i++) {
-        var c = s.charAt(i);
-        if (c.toUpperCase() !== c || c.toLowerCase() !== c) {
-            result.push(new RegExp("[" + c.toLowerCase() + c.toUpperCase() + "]"));
-            } else {
-            result.push({literal: c});
+    function literals(list) {
+        const rules = {};
+        for (const lit of list) {
+            rules[lit] = {match: lit, next: 'main'};
         }
+        return rules;
     }
-    return {subexpression: [{tokens: result, postprocess: function(d) {return d.join(""); }}]};
-}
 
+    const rules = Object.assign({
+        ws: {match: /\s+/, lineBreaks: true, next: 'main'},
+        comment: /\#.*/,
+        arrow: {match: /[=-]+\>/, next: 'main'},
+        js: {
+            match: /\{\%(?:[^%]|\%[^}])*\%\}/,
+            value: x => x.slice(2, -2),
+            lineBreaks: true,
+        },
+        word: {match: /[\w\?\+]+/, next: 'afterWord'},
+        string: {
+            match: /"(?:[^\\"\n]|\\["\\/bfnrt]|\\u[a-fA-F0-9]{4})*"/,
+            value: x => JSON.parse(x),
+            next: 'main',
+        },
+        btstring: {
+            match: /`[^`]*`/,
+            value: x => x.slice(1, -1),
+            next: 'main',
+            lineBreaks: true,
+        },
+    }, literals([
+        ',', '|', '$', '%', '(', ')',
+        ':?', ':*', ':+',
+        '@include', '@builtin', '@',
+        ']',
+    ]));
+
+    const lexer = moo.states({
+        main: Object.assign({}, rules, {
+            charclass: {
+                match: /\.|\[(?:\\.|[^\\\n])+?\]/,
+            },
+        }),
+        // Both macro arguments and charclasses are both enclosed in [ ].
+        // We disambiguate based on whether the previous token was a `word`.
+        afterWord: Object.assign({}, rules, {
+            '[': {match: '[', next: 'main'},
+        }),
+    });
+
+    function insensitive(sl) {
+        var s = sl.literal;
+        var result = [];
+        for (let i=0; i<s.length; i++) {
+            var c = s.charAt(i);
+            if (c.toUpperCase() !== c || c.toLowerCase() !== c) {
+                result.push(new RegExp('[' + c.toLowerCase() + c.toUpperCase() + ']'));
+            } else {
+                result.push({literal: c});
+            }
+        }
+        return {subexpression: [{tokens: result, postprocess: d => d.join('')}]};
+    }
 %}
+
 @lexer lexer
 
-final -> _ prog _ %ws:?  {% function(d) { return d[1]; } %}
+final -> _ prog _ %ws:?  {% ([, a]) => a %}
 
-prog -> prod  {% function(d) { return [d[0]]; } %}
-      | prod ws prog  {% function(d) { return [d[0]].concat(d[2]); } %}
+prog -> prod  {% ([a]) => [a] %}
+      | prod ws prog  {% ([a,, b]) => [a, ...b] %}
 
-prod -> word _ %arrow _ expression+  {% function(d) { return {name: d[0], rules: d[4]}; } %}
-      | word "[" _ wordlist _ "]" _ %arrow _ expression+ {% function(d) {return {macro: d[0], args: d[3], exprs: d[9]}} %}
-      | "@" _ js  {% function(d) { return {body: d[2]}; } %}
-      | "@" word ws word  {% function(d) { return {config: d[1], value: d[3]}; } %}
-      | "@include"  _ string {% function(d) {return {include: d[2].literal, builtin: false}} %}
-      | "@builtin"  _ string {% function(d) {return {include: d[2].literal, builtin: true }} %}
+prod -> word _ %arrow _ expression+  {% d => ({name: d[0], rules: d[4]}) %}
+      | word "[" _ wordlist _ "]" _ %arrow _ expression+ {% d => ({macro: d[0], args: d[3], exprs: d[9]}) %}
+      | "@" _ js  {% ([,, a]) => ({body: a}) %}
+      | "@" word ws word  {% d => ({config: d[1], value: d[3]}) %}
+      | "@include"  _ string {% ([,, {literal}]) => ({include: literal, builtin: false}) %}
+      | "@builtin"  _ string {% ([,, {literal}]) => ({include: literal, builtin: true }) %}
 
 expression+ -> completeexpression
-             | expression+ _ "|" _ completeexpression  {% function(d) { return d[0].concat([d[4]]); } %}
+             | expression+ _ "|" _ completeexpression  {% d => [...d[0], d[4]] %}
 
 expressionlist -> completeexpression
-             | expressionlist _ "," _ completeexpression {% function(d) { return d[0].concat([d[4]]); } %}
+             | expressionlist _ "," _ completeexpression {% d => [...d[0], d[4]] %}
 
 wordlist -> word
-            | wordlist _ "," _ word {% function(d) { return d[0].concat([d[4]]); } %}
+            | wordlist _ "," _ word {% d => [...d[0], d[4]] %}
 
-completeexpression -> expr  {% function(d) { return {tokens: d[0]}; } %}
-                    | expr _ js  {% function(d) { return {tokens: d[0], postprocess: d[2]}; } %}
+completeexpression -> expr  {% ([a]) => ({tokens: a}) %}
+                    | expr _ js  {% ([a,, b]) => ({tokens: a, postprocess: b}) %}
 
 expr_member ->
       word {% id %}
-    | "$" word {% function(d) {return {mixin: d[1]}} %}
-    | word "[" _ expressionlist _ "]" {% function(d) {return {macrocall: d[0], args: d[3]}} %}
-    | string "i":? {% function(d) { if (d[1]) {return insensitive(d[0]); } else {return d[0]; } } %}
-    | "%" word {% function(d) {return {token: d[1]}} %}
+    | "$" word {% ([, a]) => ({mixin: a}) %}
+    | word "[" _ expressionlist _ "]" {% d => ({macrocall: d[0], args: d[3]}) %}
+    | string "i":? {% ([a, b]) => b ? insensitive(a) : a %}
+    | "%" word {% ([, a]) => ({token: a}) %}
     | charclass {% id %}
-    | "(" _ expression+ _ ")" {% function(d) {return {'subexpression': d[2]} ;} %}
-    | expr_member _ ebnf_modifier {% function(d) {return {'ebnf': d[0], 'modifier': d[2]}; } %}
+    | "(" _ expression+ _ ")" {% ([,, a]) => ({subexpression: a}) %}
+    | expr_member _ ebnf_modifier {% ([a,, b]) => ({ebnf: a, modifier: b}) %}
 
 ebnf_modifier -> ":+" {% getValue %} | ":*" {% getValue %} | ":?" {% getValue %}
 
 expr -> expr_member
-      | expr ws expr_member  {% function(d){ return d[0].concat([d[2]]); } %}
+      | expr ws expr_member  {% ([a,, b]) => [...a, b] %}
 
 word -> %word {% getValue %}
 
-string -> %string {% d => ({literal: d[0].value}) %}
-        | %btstring {% d => ({literal: d[0].value}) %}
+string -> %string {% ([{value}]) => ({literal: value}) %}
+        | %btstring {% ([{value}]) => ({literal: value}) %}
 
-charclass -> %charclass  {% getValue %}
+charclass -> %charclass  {% ([a]) => new RegExp(a) %}
 
 js -> %js  {% getValue %}
 
