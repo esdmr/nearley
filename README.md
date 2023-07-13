@@ -41,6 +41,12 @@ nearley is used by a wide variety of projects:
 nearley is an npm [staff
 pick](https://www.npmjs.com/package/npm-collection-staff-picks).
 
+## This fork
+
+Modernized version of nearley with slightly better support for TypeScript,
+mostly for personal use. Since it will not be published to NPM, you will have to
+tell NPM to install the GitHub URL directly.
+
 ## Documentation
 
 Please visit our website https://nearley.js.org to get started! You will find a
