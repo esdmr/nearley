@@ -55,13 +55,13 @@
         }),
     });
 
-    function insensitive(sl) {
-        var s = sl.literal;
-        var result = [];
+    function insensitive({literal}) {
+        const s = literal;
+        const result = [];
         for (let i=0; i<s.length; i++) {
-            var c = s.charAt(i);
+            const c = s.charAt(i);
             if (c.toUpperCase() !== c || c.toLowerCase() !== c) {
-                result.push(new RegExp('[' + c.toLowerCase() + c.toUpperCase() + ']'));
+                result.push(new RegExp(`[${c.toLowerCase()}${c.toUpperCase()}]`));
             } else {
                 result.push({literal: c});
             }
