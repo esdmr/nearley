@@ -3,6 +3,7 @@
   "version": "2.20.1",
   "description": "Simple, fast, powerful parser toolkit for JavaScript.",
   "main": "lib/nearley.js",
+  "type": "module",
   "dependencies": {
     "commander": "^2.19.0",
     "moo": "^0.5.0",
@@ -46,5 +47,10 @@
   "funding": {
     "type": "individual",
     "url": "https://nearley.js.org/#give-to-nearley"
+  },
+  "devDependencies": {
+    "@types/moo": "^0.5.5",
+    "@types/node": "18",
+    "lebab": "^3.2.1"
   }
 }

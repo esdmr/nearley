@@ -12,7 +12,8 @@ function literals(list) {
     return rules
 }
 
-var moo = require('moo')
+import moo from 'moo';
+
 var rules = Object.assign({
     ws: {match: /\s+/, lineBreaks: true, next: 'main'},
     comment: /\#.*/,
@@ -123,4 +124,3 @@ js -> %js  {% getValue %}
 _ -> ws:?
 ws -> %ws
       | %ws:? %comment _
-

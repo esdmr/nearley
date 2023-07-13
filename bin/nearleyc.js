@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 
-var fs = require('fs');
-var nearley = require('../lib/nearley.js');
-var opts = require('commander');
-var Compile = require('../lib/compile.js');
-var StreamWrapper = require('../lib/stream.js');
+import fs from 'fs';
+import process from 'process';
+import * as nearley from '../lib/nearley.js';
+import opts from 'commander';
+import {Compile} from '../lib/compile.js';
+import {StreamWrapper} from '../lib/stream.js';
+import pkg from '../package.json' assert {type: 'json'};
+import bootstrap from '../lib/nearley-language-bootstrapped.js';
 
-var version = require('../package.json').version;
-
-opts.version(version, '-v, --version')
+opts.version(pkg.version, '-v, --version')
     .arguments('<file.ne>')
     .option('-o, --out [filename.js]', 'File to output to (defaults to stdout)', false)
     .option('-e, --export [name]', 'Variable to set parser to', 'grammar')
@@ -17,22 +18,22 @@ opts.version(version, '-v, --version')
     .parse(process.argv);
 
 
-var input = opts.args[0] ? fs.createReadStream(opts.args[0]) : process.stdin;
-var output = opts.out ? fs.createWriteStream(opts.out) : process.stdout;
+const input = opts.args[0] ? fs.createReadStream(opts.args[0]) : process.stdin;
+const output = opts.out ? fs.createWriteStream(opts.out) : process.stdout;
 
-var parserGrammar = nearley.Grammar.fromCompiled(require('../lib/nearley-language-bootstrapped.js'));
-var parser = new nearley.Parser(parserGrammar);
-var generate = require('../lib/generate.js');
-var lint = require('../lib/lint.js');
+const parserGrammar = nearley.Grammar.fromCompiled(bootstrap);
+const parser = new nearley.Parser(parserGrammar);
+import {generate} from '../lib/generate.js';
+import {lint} from '../lib/lint.js';
 
 input
     .pipe(new StreamWrapper(parser))
-    .on('finish', function() {
+    .on('finish', () => {
         parser.feed('\n');
-        var c = Compile(
+        const c = Compile(
             parser.results[0],
-            Object.assign({version: version}, opts)
+            Object.assign({version: pkg.version}, opts)
         );
-        if (!opts.quiet) lint(c, {'out': process.stderr, 'version': version});
+        if (!opts.quiet) lint(c, {'out': process.stderr, 'version': pkg.version});
         output.write(generate(c, opts.export));
     });
