@@ -18,7 +18,7 @@ function nth(n) {
 // @ts-ignore
 function $(o) {
     return function(d) {
-        var ret = {};
+        const ret = {};
         Object.keys(o).forEach(function(k) {
             ret[k] = d[o[k]];
         });
