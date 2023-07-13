@@ -6,20 +6,14 @@
   "type": "module",
   "dependencies": {
     "commander": "^2.19.0",
-    "moo": "^0.5.0",
-    "railroad-diagrams": "^1.0.0",
-    "randexp": "0.4.6"
+    "moo": "^0.5.0"
   },
   "files": [
     "bin/",
-    "lib/",
-    "builtin/"
+    "lib/"
   ],
   "bin": {
-    "nearleyc": "bin/nearleyc.js",
-    "nearley-test": "bin/nearley-test.js",
-    "nearley-unparse": "bin/nearley-unparse.js",
-    "nearley-railroad": "bin/nearley-railroad.js"
+    "nearleyc": "bin/nearleyc.js"
   },
   "keywords": [
     "parser",
@@ -31,11 +25,7 @@
     "language"
   ],
   "scripts": {
-    "bootstrap": "mocha test/bootstrap.test.js && bin/nearleyc.js lib/nearley-language-bootstrapped.ne > tmp && mv tmp lib/nearley-language-bootstrapped.js && echo bootstrapped ok",
-    "benchmark": "benchr test/benchmark.js",
-    "test": "mocha test/*.test.js",
-    "doctoc": "doctoc --notitle README.md",
-    "profile": "bin/nearleyc.js test/grammars/parens.ne > test/grammars/parens.js && node test/profile.js"
+    "bootstrap": "./bin/nearleyc.js lib/nearley-language-bootstrapped.ne > tmp && mv tmp lib/nearley-language-bootstrapped.js && echo bootstrapped ok"
   },
   "author": "Hardmath123",
   "contributors": "https://github.com/Hardmath123/nearley/graphs/contributors",
@@ -51,7 +41,6 @@
   "devDependencies": {
     "@types/moo": "^0.5.5",
     "@types/node": "18",
-    "lebab": "^3.2.1",
     "xo": "^0.54.2"
   }
 }
