@@ -4,7 +4,7 @@ import fs from 'fs';
 import process from 'process';
 import * as nearley from '../lib/nearley.js';
 import opts from 'commander';
-import {Compile} from '../lib/compile.js';
+import {compile} from '../lib/compile.js';
 import {StreamWrapper} from '../lib/stream.js';
 import pkg from '../package.json' assert {type: 'json'};
 import bootstrap from '../lib/nearley-language-bootstrapped.js';
@@ -19,6 +19,7 @@ opts.version(pkg.version, '-v, --version')
 
 
 const input = opts.args[0] ? fs.createReadStream(opts.args[0]) : process.stdin;
+/** @type {NodeJS.WritableStream} */
 const output = opts.out ? fs.createWriteStream(opts.out) : process.stdout;
 
 const parserGrammar = nearley.Grammar.fromCompiled(bootstrap);
@@ -30,7 +31,7 @@ input
     .pipe(new StreamWrapper(parser))
     .on('finish', () => {
         parser.feed('\n');
-        const c = Compile(
+        const c = compile(
             parser.results[0],
             Object.assign({version: pkg.version}, opts)
         );
