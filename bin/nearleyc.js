@@ -6,9 +6,9 @@ import * as nearley from '../lib/nearley.js';
 import opts from 'commander';
 import {compile} from '../lib/compile.js';
 import {StreamWrapper} from '../lib/stream.js';
-import pkg from '../package.json' assert {type: 'json'};
 import bootstrap from '../lib/nearley-language-bootstrapped.js';
 
+const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 opts.version(pkg.version, '-v, --version')
     .arguments('<file.ne>')
     .option('-o, --out [filename.js]', 'File to output to (defaults to stdout)', false)
