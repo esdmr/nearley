@@ -25,6 +25,7 @@ opts
 	.option('-e, --export [name]', 'Variable to set parser to', 'grammar')
 	.option('-q, --quiet', 'Suppress linter')
 	.option('--nojs', 'Do not compile postprocessors')
+	.option('-O, --optimize', 'combine equal rules')
 	.parse(process.argv);
 
 const input = opts.args[0] ? fs.createReadStream(opts.args[0]) : process.stdin;
