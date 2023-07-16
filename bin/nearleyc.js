@@ -3,12 +3,13 @@
 import fs from 'node:fs';
 import process from 'node:process';
 import opts from 'commander';
-import * as nearley from '../lib/nearley.js';
-import {compile} from '../lib/compile.js';
-import {StreamWrapper} from '../lib/stream.js';
-import bootstrap from '../lib/nearley-language-bootstrapped.js';
-import {generate} from '../lib/generate.js';
-import {lint} from '../lib/lint.js';
+import {compile} from '../lib/compiler/compile.js';
+import {generate} from '../lib/compiler/generate.js';
+import {lint} from '../lib/compiler/lint.js';
+import bootstrap from '../lib/compiler/nearley-language-bootstrapped.js';
+import {StreamWrapper} from '../lib/compiler/stream.js';
+import {Grammar} from '../lib/runtime/grammar.js';
+import {Parser} from '../lib/runtime/parser.js';
 
 const pkg = JSON.parse(
 	fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -32,8 +33,8 @@ const input = opts.args[0] ? fs.createReadStream(opts.args[0]) : process.stdin;
 /** @type {NodeJS.WritableStream} */
 const output = opts.out ? fs.createWriteStream(opts.out) : process.stdout;
 
-const parserGrammar = nearley.Grammar.fromCompiled(bootstrap);
-const parser = new nearley.Parser(parserGrammar);
+const parserGrammar = Grammar.fromCompiled(bootstrap);
+const parser = new Parser(parserGrammar);
 
 input.pipe(new StreamWrapper(parser)).on('finish', () => {
 	parser.feed('\n');
