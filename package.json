@@ -2,7 +2,13 @@
   "name": "nearley",
   "version": "2.20.1",
   "description": "Simple, fast, powerful parser toolkit for JavaScript.",
-  "main": "lib/nearley.js",
+  "exports": {
+    ".": "./lib/runtime/index.js",
+    "./*": "./lib/runtime/*",
+    "./compiler/*": {
+      "node": "./lib/compiler/*"
+    }
+  },
   "type": "module",
   "dependencies": {
     "commander": "^2.19.0",
