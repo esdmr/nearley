@@ -91,6 +91,7 @@
 
 @lexer lexer
 @nearley "#nearley"
+@tsNoCheck true
 
 final -> _ prog _ %ws:?  {% ([, a]) => a %}
 
