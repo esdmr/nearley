@@ -3,20 +3,33 @@
   "version": "2.20.1",
   "description": "Simple, fast, powerful parser toolkit for JavaScript.",
   "exports": {
-    ".": "./lib/runtime/index.js",
-    "./*": "./lib/runtime/*",
+    ".": {
+      "types": "./types/lib/runtime/index.js",
+      "import": "./lib/runtime/index.js"
+    },
+    "./*": {
+      "types": "./types/lib/runtime/*.d.ts",
+      "import": "./lib/runtime/*.js"
+    },
+    "./package.json": "./package.json",
     "./compiler/*": {
-      "node": "./lib/compiler/*"
+      "node": {
+        "types": "./types/lib/compiler/*.d.ts",
+        "import": "./lib/compiler/*.js"
+      }
     }
   },
   "type": "module",
   "dependencies": {
-    "commander": "^2.19.0",
-    "moo": "^0.5.0"
+    "@commander-js/extra-typings": "^11.0.0",
+    "commander": "^11.0.0",
+    "moo": "^0.5.2",
+    "@types/moo": "^0.5.5"
   },
   "files": [
     "bin/",
-    "lib/"
+    "lib/",
+    "types/lib/"
   ],
   "bin": {
     "nearleyc": "bin/nearleyc.js"
@@ -45,8 +58,12 @@
     "url": "https://nearley.js.org/#give-to-nearley"
   },
   "devDependencies": {
-    "@types/moo": "^0.5.5",
+    "@internal/eslint-plugin": "link:../ris-gates/lint",
+    "@tsconfig/esm": "^1.0.4",
+    "@tsconfig/node18": "^18.2.0",
+    "@tsconfig/strictest": "^2.0.1",
     "@types/node": "18",
-    "xo": "^0.54.2"
+    "typescript": "^5.1.6",
+    "xo": "^0.55.0"
   }
 }

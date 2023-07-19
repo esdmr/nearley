@@ -1,6 +1,7 @@
 # nearley grammar
 @{%
-    import moo from 'moo';
+    import {EbnfSymbol, MacroParameterSymbol, SubExpressionSymbol} from './symbol.js';
+    import {Expression, Production, RawSourceCode, Include, Config, MacroDefinition} from './ast.js';
 
     function getValue([{value}]) {
         return value;
@@ -25,7 +26,13 @@
                 value: (x) => x.slice(2, -2),
                 lineBreaks: true,
             },
-            word: {match: /[\w?+]+/, next: 'afterWord'},
+            word: {
+                match: /[\w?+]+/,
+                next: 'afterWord',
+                type: nearley.lexer.keywords({
+                    keyword_null: 'null',
+                }),
+            },
             string: {
                 match: /"(?:[^\\"\n]|\\["\\/bfnrt]|\\u[a-fA-F\d]{4})*"/,
                 value: (x) => JSON.parse(x),
@@ -54,7 +61,7 @@
         ]),
     );
 
-    const lexer = moo.states({
+    const lexer = nearley.lexer.states({
         main: Object.assign({}, rules, {
             charclass: {
                 match: /\.|\[(?:\\.|[^\\\n])+?]/,
@@ -67,19 +74,18 @@
         }),
     });
 
-    function insensitive({literal}) {
-        const s = literal;
+    function insensitive({value}) {
         const result = [];
-        for (let i = 0; i < s.length; i++) {
-            const c = s.charAt(i);
+        for (let i = 0; i < value.length; i++) {
+            const c = value.charAt(i);
             if (c.toUpperCase() !== c || c.toLowerCase() !== c) {
                 result.push(new RegExp(`[${c.toLowerCase()}${c.toUpperCase()}]`));
             } else {
-                result.push({literal: c});
+                result.push(new nearley.LiteralSymbol(c));
             }
         }
 
-        return {subexpression: [{tokens: result, postprocess: (d) => d.join('')}]};
+        return new SubExpressionSymbol([new Expression(result, 'joiner')]);
     }
 %}
 
@@ -87,51 +93,55 @@
 
 final -> _ prog _ %ws:?  {% ([, a]) => a %}
 
-prog -> prod  {% ([a]) => [a] %}
+prog -> prod
       | prod ws prog  {% ([a, _b, c]) => [a, ...c] %}
 
-prod -> word _ %arrow _ expression+  {% d => ({name: d[0], rules: d[4]}) %}
-      | word "[" _ wordlist _ "]" _ %arrow _ expression+ {% d => ({macro: d[0], args: d[3], exprs: d[9]}) %}
-      | "@" _ js  {% ([_a, _b, c]) => ({body: c}) %}
-      | "@" word ws word  {% d => ({config: d[1], value: d[3]}) %}
-      | "@include"  _ string {% ([_a, _b, {literal}]) => ({include: literal}) %}
+prod -> word _ %arrow _ expression+  {% d => new Production(d[0], d[4]) %}
+      | word "[" _ wordlist _ "]" _ %arrow _ expression+ {% d => MacroDefinition(d[0], d[3], d[9]) %}
+      | "@" _ js  {% ([_a, _b, c]) => c %}
+      | "@" word ws word  {% d => new Config(d[1], d[3]) %}
+      | "@include"  _ string {% ([_a, _b, {value}]) => new Include(value) %}
 
 expression+ -> completeexpression
              | expression+ _ "|" _ completeexpression  {% d => [...d[0], d[4]] %}
 
 expressionlist -> completeexpression
-             | expressionlist _ "," _ completeexpression {% d => [...d[0], d[4]] %}
+                | expressionlist _ "," _ completeexpression {% d => [...d[0], d[4]] %}
 
 wordlist -> word
-            | wordlist _ "," _ word {% d => [...d[0], d[4]] %}
+          | wordlist _ "," _ word {% d => [...d[0], d[4]] %}
 
-completeexpression -> expr  {% ([a]) => ({tokens: a}) %}
-                    | expr _ js  {% ([a, _b, c]) => ({tokens: a, postprocess: c}) %}
+completeexpression -> expr  {% ([a]) => new Expression(a) %}
+                    | expr _ js  {% ([a, _b, c]) => new Expression(a, c) %}
 
 expr_member ->
-      word {% id %}
-    | "$" word {% ([, a]) => ({mixin: a}) %}
-    | word "[" _ expressionlist _ "]" {% d => ({macrocall: d[0], args: d[3]}) %}
+      %word {% getValue %}
+    | %keyword_null {% () => '' %}
+    | "$" word {% ([, a]) => new MacroParameterSymbol(a) %}
+    | word "[" _ expressionlist _ "]" {% d => new MacroCallSymbol(d[0], d[3]) %}
     | string "i":? {% ([a, b]) => b ? insensitive(a) : a %}
-    | "%" word {% ([, a]) => ({token: a}) %}
-    | charclass {% id %}
-    | "(" _ expression+ _ ")" {% ([_a, _b, c]) => ({subexpression: c}) %}
-    | expr_member _ ebnf_modifier {% ([a, _b, c]) => ({ebnf: a, modifier: c}) %}
+    | "%" word {% ([, a]) => new nearley.TokenSymbol(a) %}
+    | charclass {% nearley.id %}
+    | "(" _ expression+ _ ")" {% ([_a, _b, c]) => new SubExpressionSymbol(c) %}
+    | expr_member _ ebnf_modifier {% ([a, _b, c]) => new EbnfSymbol(a, c) %}
 
-ebnf_modifier -> ":+" {% getValue %} | ":*" {% getValue %} | ":?" {% getValue %}
+ebnf_modifier -> ":+" {% () => EbnfSymbol.plus %}
+               | ":*" {% () => EbnfSymbol.star %}
+               | ":?" {% () => EbnfSymbol.opt %}
 
 expr -> expr_member
       | expr ws expr_member  {% ([a, _b, c]) => [...a, c] %}
 
 word -> %word {% getValue %}
+      | %keyword_null {% getValue %}
 
-string -> %string {% ([{value}]) => ({literal: value}) %}
-        | %btstring {% ([{value}]) => ({literal: value}) %}
+string -> %string {% ([{value}]) => new nearley.LiteralSymbol(value) %}
+        | %btstring {% ([{value}]) => new nearley.LiteralSymbol(value) %}
 
 charclass -> %charclass  {% ([a]) => new RegExp(a) %}
 
-js -> %js  {% getValue %}
+js -> %js  {% ([{value}]) => new RawSourceCode(value) %}
 
 _ -> ws:?
 ws -> %ws
-      | %ws:? %comment _
+    | %ws:? %comment _

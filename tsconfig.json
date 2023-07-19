@@ -1,0 +1,15 @@
+{
+	"extends": ["@tsconfig/strictest", "@tsconfig/node18", "@tsconfig/esm"],
+	"compilerOptions": {
+		"checkJs": true,
+		"rootDir": ".",
+		"declaration": true,
+		"declarationDir": "types",
+		"emitDeclarationOnly": true,
+		"noPropertyAccessFromIndexSignature": false
+	},
+	"include": [
+		"lib/**/*.js",
+		"bin/**/*.js"
+	]
+}
