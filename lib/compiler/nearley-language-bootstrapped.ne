@@ -1,6 +1,6 @@
 # nearley grammar
 @{%
-    import {EbnfSymbol, MacroParameterSymbol, SubExpressionSymbol} from './symbol.js';
+    import {EbnfSymbol, MacroParameterSymbol, MacroCallSymbol, SubExpressionSymbol} from './symbol.js';
     import {Expression, Production, RawSourceCode, Include, Config, MacroDefinition} from './ast.js';
 
     function getValue([{value}]) {
@@ -90,6 +90,7 @@
 %}
 
 @lexer lexer
+@nearley "#nearley"
 
 final -> _ prog _ %ws:?  {% ([, a]) => a %}
 
@@ -97,9 +98,10 @@ prog -> prod
       | prod ws prog  {% ([a, _b, c]) => [a, ...c] %}
 
 prod -> word _ %arrow _ expression+  {% d => new Production(d[0], d[4]) %}
-      | word "[" _ wordlist _ "]" _ %arrow _ expression+ {% d => MacroDefinition(d[0], d[3], d[9]) %}
+      | word "[" _ wordlist _ "]" _ %arrow _ expression+ {% d => new MacroDefinition(d[0], d[3], d[9]) %}
       | "@" _ js  {% ([_a, _b, c]) => c %}
       | "@" word ws word  {% d => new Config(d[1], d[3]) %}
+      | "@" word ws string  {% d => new Config(d[1], d[3].value) %}
       | "@include"  _ string {% ([_a, _b, {value}]) => new Include(value) %}
 
 expression+ -> completeexpression

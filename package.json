@@ -2,19 +2,22 @@
   "name": "nearley",
   "version": "2.20.1",
   "description": "Simple, fast, powerful parser toolkit for JavaScript.",
+  "imports": {
+    "#nearley": "./lib/runtime/index.js"
+  },
   "exports": {
     ".": {
-      "types": "./types/lib/runtime/index.js",
+      "types": "./types/runtime/index.js",
       "import": "./lib/runtime/index.js"
     },
     "./*": {
-      "types": "./types/lib/runtime/*.d.ts",
+      "types": "./types/runtime/*.d.ts",
       "import": "./lib/runtime/*.js"
     },
     "./package.json": "./package.json",
     "./compiler/*": {
       "node": {
-        "types": "./types/lib/compiler/*.d.ts",
+        "types": "./types/compiler/*.d.ts",
         "import": "./lib/compiler/*.js"
       }
     }
@@ -27,12 +30,11 @@
     "@types/moo": "^0.5.5"
   },
   "files": [
-    "bin/",
     "lib/",
-    "types/lib/"
+    "types/"
   ],
   "bin": {
-    "nearleyc": "bin/nearleyc.js"
+    "nearleyc": "lib/bin/nearleyc.js"
   },
   "keywords": [
     "parser",
@@ -44,7 +46,7 @@
     "language"
   ],
   "scripts": {
-    "bootstrap": "./bin/nearleyc.js -O lib/compiler/nearley-language-bootstrapped.ne -o tmp && mv tmp lib/compiler/nearley-language-bootstrapped.js && echo bootstrapped ok"
+    "bootstrap": "./lib/bin/nearleyc.js -O lib/compiler/nearley-language-bootstrapped.ne -o tmp && mv tmp lib/compiler/nearley-language-bootstrapped.js && echo bootstrapped ok"
   },
   "author": "Hardmath123",
   "contributors": "https://github.com/Hardmath123/nearley/graphs/contributors",
