@@ -103,6 +103,7 @@ prod -> word _ %arrow _ expression+  {% d => new Production(d[0], d[4]) %}
       | "@" _ js  {% ([_a, _b, c]) => c %}
       | "@" word ws word  {% d => new Config(d[1], d[3]) %}
       | "@" word ws string  {% d => new Config(d[1], d[3].value) %}
+      | "@" word ws js  {% d => new Config(d[1], d[3].source) %}
       | "@include"  _ string {% ([_a, _b, {value}]) => new Include(value) %}
 
 expression+ -> completeexpression
