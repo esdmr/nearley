@@ -19,9 +19,6 @@ dependencies:
     version: 0.5.2
 
 devDependencies:
-  '@internal/eslint-plugin':
-    specifier: link:../ris-gates/lint
-    version: link:../ris-gates/lint
   '@tsconfig/esm':
     specifier: ^1.0.4
     version: 1.0.4

@@ -60,7 +60,6 @@
     "url": "https://nearley.js.org/#give-to-nearley"
   },
   "devDependencies": {
-    "@internal/eslint-plugin": "link:../ris-gates/lint",
     "@tsconfig/esm": "^1.0.4",
     "@tsconfig/node18": "^18.2.0",
     "@tsconfig/strictest": "^2.0.1",
