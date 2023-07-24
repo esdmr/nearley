@@ -2,6 +2,27 @@
   "name": "nearley",
   "version": "2.20.1",
   "description": "Simple, fast, powerful parser toolkit for JavaScript.",
+  "keywords": [
+    "parser",
+    "parse",
+    "generator",
+    "compiler",
+    "compile",
+    "grammar",
+    "language"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hardmath123/nearley.git"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://nearley.js.org/#give-to-nearley"
+  },
+  "license": "MIT",
+  "author": "Hardmath123",
+  "contributors": "https://github.com/Hardmath123/nearley/graphs/contributors",
+  "type": "module",
   "imports": {
     "#nearley": "./lib/runtime/index.js"
   },
@@ -22,42 +43,21 @@
       }
     }
   },
-  "type": "module",
-  "dependencies": {
-    "@commander-js/extra-typings": "^11.0.0",
-    "commander": "^11.0.0",
-    "moo": "^0.5.2",
-    "@types/moo": "^0.5.5"
+  "bin": {
+    "nearleyc": "lib/bin/nearleyc.js"
   },
   "files": [
     "lib/",
     "types/"
   ],
-  "bin": {
-    "nearleyc": "lib/bin/nearleyc.js"
-  },
-  "keywords": [
-    "parser",
-    "parse",
-    "generator",
-    "compiler",
-    "compile",
-    "grammar",
-    "language"
-  ],
   "scripts": {
     "bootstrap": "./lib/bin/nearleyc.js -O lib/compiler/nearley-language-bootstrapped.ne -o tmp && mv tmp lib/compiler/nearley-language-bootstrapped.js && echo bootstrapped ok"
   },
-  "author": "Hardmath123",
-  "contributors": "https://github.com/Hardmath123/nearley/graphs/contributors",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/hardmath123/nearley.git"
-  },
-  "funding": {
-    "type": "individual",
-    "url": "https://nearley.js.org/#give-to-nearley"
+  "dependencies": {
+    "@commander-js/extra-typings": "^11.0.0",
+    "@types/moo": "^0.5.5",
+    "commander": "^11.0.0",
+    "moo": "^0.5.2"
   },
   "devDependencies": {
     "@tsconfig/esm": "^1.0.4",
