@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  CI:
+    name: CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@e33196f7422957bea03ed53f6fbb155025ffc7b8 # v3
+        with:
+          node-version: "18"
+
+      - name: Setup pnpm
+        run: |-
+          corepack enable
+          pnpm --version
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: echo "pnpm_cache_dir=$(pnpm store path)" >>$GITHUB_OUTPUT
+
+      - name: Cache pnpm modules
+        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+          key: ${{ runner.OS }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.OS }}-pnpm
+
+      - name: Install packages
+        run: pnpm install
+
+      - name: Bootstrap
+        run: pnpm bootstrap
+
+      - name: Ensure bootstrap is up-to-date
+        run: git diff-index --quiet HEAD -- lib/compiler/nearley-language-bootstrapped.js
+
+      - name: Type check
+        run: pnpm tsc
+
+      - name: Lint
+        run: pnpm xo
