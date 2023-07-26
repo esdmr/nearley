@@ -1,76 +1,76 @@
 {
-  "name": "@esdmr/nearley",
-  "version": "3.0.0",
-  "description": "Simple, fast, powerful parser toolkit for JavaScript.",
-  "keywords": [
-    "parser",
-    "parse",
-    "generator",
-    "compiler",
-    "compile",
-    "grammar",
-    "language"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/esdmr/nearley.git"
-  },
-  "funding": {
-    "type": "individual",
-    "url": "https://nearley.js.org/#give-to-nearley"
-  },
-  "license": "MIT",
-  "author": "Hardmath123",
-  "contributors": [
-    {
-      "name": "contributors to original repository",
-      "url": "https://github.com/Hardmath123/nearley/graphs/contributors"
-    },
-    {
-      "name": "esdmr",
-      "url": "https://github.com/esdmr"
-    }
-  ],
-  "type": "module",
-  "exports": {
-    ".": {
-      "types": "./types/runtime/index.d.ts",
-      "import": "./lib/runtime/index.js"
-    },
-    "./*": {
-      "types": "./types/runtime/*.d.ts",
-      "import": "./lib/runtime/*.js"
-    },
-    "./package.json": "./package.json",
-    "./compiler/*": {
-      "node": {
-        "types": "./types/compiler/*.d.ts",
-        "import": "./lib/compiler/*.js"
-      }
-    }
-  },
-  "bin": {
-    "nearleyc": "lib/bin/nearleyc.js"
-  },
-  "files": [
-    "lib/",
-    "types/"
-  ],
-  "scripts": {
-    "bootstrap": "./lib/bin/nearleyc.js -O lib/compiler/nearley-language-bootstrapped.ne -o tmp && mv tmp lib/compiler/nearley-language-bootstrapped.js && echo bootstrapped ok"
-  },
-  "dependencies": {
-    "@commander-js/extra-typings": "^11.0.0",
-    "@types/moo": "^0.5.5",
-    "commander": "^11.0.0",
-    "moo": "^0.5.2"
-  },
-  "devDependencies": {
-    "@tsconfig/esm": "^1.0.4",
-    "@tsconfig/node18": "^18.2.0",
-    "@tsconfig/strictest": "^2.0.1",
-    "@types/node": "18",
-    "typescript": "^5.1.6",
-    "xo": "^0.55.0"
-  }
+	"name": "@esdmr/nearley",
+	"version": "3.0.0",
+	"description": "Simple, fast, powerful parser toolkit for JavaScript.",
+	"keywords": [
+		"parser",
+		"parse",
+		"generator",
+		"compiler",
+		"compile",
+		"grammar",
+		"language"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/esdmr/nearley.git"
+	},
+	"funding": {
+		"type": "individual",
+		"url": "https://nearley.js.org/#give-to-nearley"
+	},
+	"license": "MIT",
+	"author": "Hardmath123",
+	"contributors": [
+		{
+			"name": "contributors to original repository",
+			"url": "https://github.com/Hardmath123/nearley/graphs/contributors"
+		},
+		{
+			"name": "esdmr",
+			"url": "https://github.com/esdmr"
+		}
+	],
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./types/runtime/index.d.ts",
+			"import": "./lib/runtime/index.js"
+		},
+		"./*": {
+			"types": "./types/runtime/*.d.ts",
+			"import": "./lib/runtime/*.js"
+		},
+		"./package.json": "./package.json",
+		"./compiler/*": {
+			"node": {
+				"types": "./types/compiler/*.d.ts",
+				"import": "./lib/compiler/*.js"
+			}
+		}
+	},
+	"bin": {
+		"nearleyc": "lib/bin/nearleyc.js"
+	},
+	"files": [
+		"lib/",
+		"types/"
+	],
+	"scripts": {
+		"bootstrap": "./lib/bin/nearleyc.js -O lib/compiler/nearley-language-bootstrapped.ne -o tmp && mv tmp lib/compiler/nearley-language-bootstrapped.js && echo bootstrapped ok"
+	},
+	"dependencies": {
+		"@commander-js/extra-typings": "^11.0.0",
+		"@types/moo": "^0.5.5",
+		"commander": "^11.0.0",
+		"moo": "^0.5.2"
+	},
+	"devDependencies": {
+		"@tsconfig/esm": "^1.0.4",
+		"@tsconfig/node18": "^18.2.0",
+		"@tsconfig/strictest": "^2.0.1",
+		"@types/node": "18",
+		"typescript": "^5.1.6",
+		"xo": "^0.55.0"
+	}
 }
