@@ -1,32 +1,40 @@
-# [nearley](http://nearley.js.org) ↗️
-[![JS.ORG](https://img.shields.io/badge/js.org-nearley-ffb400.svg?style=flat-square)](http://js.org)
-[![npm version](https://badge.fury.io/js/nearley.svg)](https://badge.fury.io/js/nearley)
+# This fork: `esdmr/nearley`
+
+Modernized version of nearley with slightly better support for TypeScript,
+mostly for personal use. It will, at some point, be published as
+`@esdmr/nearley`.
+
+## Original README: [nearley](https://nearley.js.org) ↗️
+
+[![JS.ORG](https://img.shields.io/badge/js.org-nearley-ffb400.svg?style=flat-square)](https://js.org)
+[![npm
+version](https://badge.fury.io/js/nearley.svg)](https://badge.fury.io/js/nearley)
 
 nearley is a simple, fast and powerful parsing toolkit. It consists of:
+
 1. [A powerful, modular DSL for describing
    languages](https://nearley.js.org/docs/grammar)
-2. [An efficient, lightweight Earley
-   parser](https://nearley.js.org/docs/parser)
+2. [An efficient, lightweight Earley parser](https://nearley.js.org/docs/parser)
 3. [Loads of tools, editor plug-ins, and other
    goodies!](https://nearley.js.org/docs/tooling)
 
 nearley is a **streaming** parser with support for catching **errors**
-gracefully and providing _all_ parsings for **ambiguous** grammars. It is
+gracefully and providing *all* parsings for **ambiguous** grammars. It is
 compatible with a variety of **lexers** (we recommend
-[moo](http://github.com/tjvr/moo)). It comes with tools for creating **tests**,
+[moo](https://github.com/tjvr/moo)). It comes with tools for creating **tests**,
 **railroad diagrams** and **fuzzers** from your grammars, and has support for a
 variety of editors and platforms. It works in both node and the browser.
 
 Unlike most other parser generators, nearley can handle *any* grammar you can
-define in BNF (and more!). In particular, while most existing JS parsers such
-as PEGjs and Jison choke on certain grammars (e.g. [left recursive
-ones](http://en.wikipedia.org/wiki/Left_recursion)), nearley handles them
+define in BNF (and more!). In particular, while most existing JS parsers such as
+PEG.js and Jison choke on certain grammars (e.g., [left recursive
+ones](https://en.wikipedia.org/wiki/Left_recursion)), nearley handles them
 easily and efficiently by using the [Earley parsing
 algorithm](https://en.wikipedia.org/wiki/Earley_parser).
 
 nearley is used by a wide variety of projects:
 
-- [artificial
+- [Artificial
   intelligence](https://github.com/ChalmersGU-AI-course/shrdlite-course-project)
   and
 - [computational
@@ -41,36 +49,30 @@ nearley is used by a wide variety of projects:
 nearley is an npm [staff
 pick](https://www.npmjs.com/package/npm-collection-staff-picks).
 
-## This fork
+### Documentation
 
-Modernized version of nearley with slightly better support for TypeScript,
-mostly for personal use. Since it will not be published to NPM, you will have to
-tell NPM to install the GitHub URL directly.
-
-## Documentation
-
-Please visit our website https://nearley.js.org to get started! You will find a
-tutorial, detailed reference documents, and links to several real-world
+Please visit our website <https://nearley.js.org> to get started! You will find
+a tutorial, detailed reference documents, and links to several real-world
 examples to get inspired.
 
-## Contributing
+### Contributing
 
 Please read [this document](.github/CONTRIBUTING.md) *before* working on
-nearley. If you are interested in contributing but unsure where to start, take
-a look at the issues labeled "up for grabs" on the issue tracker, or message a
-maintainer (@kach or @tjvr on Github).
+nearley. If you are interested in contributing but unsure where to start, take a
+look at the issues labeled “up for grabs” on the issue tracker, or message a
+maintainer (`@kach` or `@tjvr` on GitHub).
 
 nearley is MIT licensed.
 
 A big thanks to Nathan Dinsmore for teaching me how to Earley, Aria Stewart for
 helping structure nearley into a mature module, and Robin Windels for
 bootstrapping the grammar. Additionally, Jacob Edelman wrote an experimental
-JavaScript parser with nearley and contributed ideas for EBNF support. Joshua
-T. Corbin refactored the compiler to be much, much prettier. Bojidar Marinov
+JavaScript parser with nearley and contributed ideas for EBNF support. Joshua T.
+Corbin refactored the compiler to be much, much prettier. Bojidar Marinov
 implemented postprocessors-in-other-languages. Shachar Itzhaky fixed a subtle
 bug with nullables.
 
-## Citing nearley
+### Citing nearley
 
 If you are citing nearley in academic work, please use the following BibTeX
 entry.
