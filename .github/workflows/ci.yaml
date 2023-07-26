@@ -46,7 +46,7 @@ jobs:
         run: pnpm bootstrap
 
       - name: Ensure bootstrap is up-to-date
-        run: git diff-index --quiet HEAD -- lib/compiler/nearley-language-bootstrapped.js
+        run: git diff --quiet HEAD -- lib/compiler/nearley-language-bootstrapped.js
 
       - name: Type check
         run: pnpm tsc
