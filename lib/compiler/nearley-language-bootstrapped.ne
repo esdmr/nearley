@@ -91,7 +91,7 @@
 
 @lexer lexer
 @nearley "../runtime/index.js"
-@tsNoCheck true
+@ts_nocheck true
 
 final -> _ prog _ %ws:?  {% ([, a]) => a %}
 
