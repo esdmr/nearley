@@ -23,12 +23,9 @@
   "author": "Hardmath123",
   "contributors": "https://github.com/Hardmath123/nearley/graphs/contributors",
   "type": "module",
-  "imports": {
-    "#nearley": "./lib/runtime/index.js"
-  },
   "exports": {
     ".": {
-      "types": "./types/runtime/index.js",
+      "types": "./types/runtime/index.d.ts",
       "import": "./lib/runtime/index.js"
     },
     "./*": {
