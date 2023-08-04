@@ -1,8 +1,7 @@
 # This fork: `esdmr/nearley`
 
 Modernized version of nearley with slightly better support for TypeScript,
-mostly for personal use. It will, at some point, be published as
-`@esdmr/nearley`.
+mostly for personal use. It is available as `@esdmr/nearley` on npm.
 
 ## Original README: [nearley](https://nearley.js.org) ↗️
 
