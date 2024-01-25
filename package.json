@@ -34,30 +34,26 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"types": "./types/runtime/index.d.ts",
-			"import": "./lib/runtime/index.js"
+			"import": "./build/runtime/index.js"
 		},
 		"./*": {
-			"types": "./types/runtime/*.d.ts",
-			"import": "./lib/runtime/*.js"
+			"import": "./build/runtime/*.js"
 		},
 		"./package.json": "./package.json",
 		"./compiler/*": {
 			"node": {
-				"types": "./types/compiler/*.d.ts",
-				"import": "./lib/compiler/*.js"
+				"import": "./build/compiler/*.js"
 			}
 		}
 	},
 	"bin": {
-		"nearleyc": "lib/bin/nearleyc.js"
+		"nearleyc": "build/bin/nearleyc.js"
 	},
 	"files": [
-		"lib/",
-		"types/"
+		"build/"
 	],
 	"scripts": {
-		"bootstrap": "./lib/bin/nearleyc.js -O lib/compiler/nearley-language-bootstrapped.ne -o tmp && mv tmp lib/compiler/nearley-language-bootstrapped.js && echo bootstrapped ok"
+		"bootstrap": "node ./build/bin/nearleyc.js -O src/compiler/nearley-language-bootstrapped.ne -o tmp && mv tmp src/compiler/nearley-language-bootstrapped.ts && echo bootstrapped ok"
 	},
 	"dependencies": {
 		"@commander-js/extra-typings": "^11.0.0",

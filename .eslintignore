@@ -1,2 +1,2 @@
-lib/compiler/nearley-language-bootstrapped.js
-types/
+src/compiler/nearley-language-bootstrapped.ts
+build/

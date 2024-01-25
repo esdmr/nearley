@@ -42,14 +42,14 @@ jobs:
       - name: Install packages
         run: pnpm install
 
+      - name: Build
+        run: pnpm tsc
+
       - name: Bootstrap
         run: pnpm bootstrap
 
       - name: Ensure bootstrap is up-to-date
-        run: git diff --quiet HEAD -- lib/compiler/nearley-language-bootstrapped.js
-
-      - name: Type check
-        run: pnpm tsc
+        run: git diff --quiet HEAD -- src/compiler/nearley-language-bootstrapped.ts
 
       - name: Lint
         run: pnpm xo
