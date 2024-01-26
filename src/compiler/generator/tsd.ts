@@ -5,7 +5,7 @@ import {builtinPostprocessors} from './utils.js';
 function* cartesianProduct<T>(
 	a?: Iterable<T>,
 	...more: Array<Iterable<T>>
-): Generator<T[]> {
+): Generator<readonly T[]> {
 	if (!a) {
 		return yield [];
 	}
@@ -28,7 +28,7 @@ export function* tsd({version, body, rules, config}: Compiler) {
 	yield `import * as nearley from ${JSON.stringify(
 		config.get('nearley')?.value ?? '@esdmr/nearley',
 	)};`;
-	yield 'const __a = 0 as unknown as readonly [any, any, any, any, any, any, any, any,...any[]];';
+	yield 'const __a = 0 as unknown as [any, any, any, any, any, any, any, any, ...any[]];';
 	yield 'const __t = 0 as unknown as nearley.lexer.Token;';
 	yield* body;
 

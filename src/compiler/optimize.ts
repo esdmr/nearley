@@ -6,7 +6,7 @@ import {Uniquer} from './uniquer.js';
 /**
  * Converts rules to a string to be used in a hash map.
  */
-function hashRules(rules: Rule[]) {
+function hashRules(rules: readonly Rule[]) {
 	return rules
 		.map((i) =>
 			JSON.stringify({
@@ -38,7 +38,7 @@ const arrayCollator = new Intl.Collator('en', {
  * > than the second argument, zero if they're equal, and a positive value
  * > otherwise.
  */
-function compareArray(a: string[], b: string[]) {
+function compareArray(a: readonly string[], b: readonly string[]) {
 	const i = a.length - b.length;
 	if (i) return i;
 
@@ -73,7 +73,7 @@ function groupRulesByName(result: Compiler) {
 /**
  * Generates a map of rule hashes to their names.
  */
-function getRuleHashes(rulesByName: Map<string, Rule[]>) {
+function getRuleHashes(rulesByName: Map<string, readonly Rule[]>) {
 	const ruleHashes = new Map<string, string[]>();
 
 	for (const [name, rules] of rulesByName) {
@@ -95,7 +95,7 @@ function getRuleHashes(rulesByName: Map<string, Rule[]>) {
  * Pick the simplest rule name to be used when generating the canonical rule
  * names.
  */
-function getPreferredRuleName(ruleNames: string[]) {
+function getPreferredRuleName(ruleNames: readonly string[]) {
 	return (
 		ruleNames
 			.map((i) => i.split('$'))
@@ -108,7 +108,7 @@ function getPreferredRuleName(ruleNames: string[]) {
  * Generate the replacement table for canonical rule names. Will pick the
  * simplest rule name out of equivalent rules.
  */
-function getRuleCanonicalNames(ruleHashes: Map<string, string[]>) {
+function getRuleCanonicalNames(ruleHashes: Map<string, readonly string[]>) {
 	const replacements = new Map<string, string>();
 
 	for (const rules of ruleHashes.values()) {

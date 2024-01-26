@@ -9,10 +9,15 @@ export class State {
 	rule;
 	dot;
 	reference;
-	wantedBy: State[];
+	wantedBy: readonly State[];
 	isComplete;
 
-	constructor(rule: Rule, dot: number, reference: number, wantedBy: State[]) {
+	constructor(
+		rule: Rule,
+		dot: number,
+		reference: number,
+		wantedBy: readonly State[],
+	) {
 		Object.seal(this);
 		this.rule = rule;
 		this.dot = dot;

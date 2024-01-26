@@ -23,7 +23,7 @@ export class MacroCallSymbol {
 	name;
 	args;
 
-	constructor(name: string, args: Expression[]) {
+	constructor(name: string, args: readonly Expression[]) {
 		Object.seal(this);
 		this.name = name;
 		this.args = args;
@@ -48,7 +48,7 @@ export class EbnfSymbol {
 export class SubExpressionSymbol {
 	expression;
 
-	constructor(expression: Expression[]) {
+	constructor(expression: readonly Expression[]) {
 		Object.seal(this);
 		this.expression = expression;
 	}

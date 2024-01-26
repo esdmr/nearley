@@ -10,7 +10,10 @@ export const builtinPostprocessors = new Map([
 	['id', 'nearley.id'],
 ]);
 
-export function serializeRules(rules: RuleNode[], defaultPostprocess?: string) {
+export function serializeRules(
+	rules: readonly RuleNode[],
+	defaultPostprocess?: string,
+) {
 	return `[\n\t${rules
 		.map((rule) => serializeRule(rule, defaultPostprocess))
 		.join(',\n\t')}\n]`;

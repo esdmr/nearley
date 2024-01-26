@@ -30,7 +30,10 @@ export class Expression {
 	symbols;
 	postprocess;
 
-	constructor(symbols: CompilerSymbol[], postprocess?: RawSourceCode | string) {
+	constructor(
+		symbols: readonly CompilerSymbol[],
+		postprocess?: RawSourceCode | string,
+	) {
 		Object.seal(this);
 		this.symbols = symbols;
 		this.postprocess = postprocess;
@@ -41,7 +44,7 @@ export class Production {
 	name;
 	expressions;
 
-	constructor(name: string, expressions: Expression[]) {
+	constructor(name: string, expressions: readonly Expression[]) {
 		Object.seal(this);
 		this.name = name;
 		this.expressions = expressions;
@@ -114,7 +117,11 @@ export class MacroDefinition {
 	parameters;
 	expression;
 
-	constructor(name: string, parameters: string[], expression: Expression[]) {
+	constructor(
+		name: string,
+		parameters: readonly string[],
+		expression: readonly Expression[],
+	) {
 		Object.seal(this);
 		this.name = name;
 		this.parameters = parameters;

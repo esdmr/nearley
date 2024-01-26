@@ -15,7 +15,7 @@ export class Parser {
 	lexerState: LexerState | undefined;
 	table: Array<Column | undefined>;
 	current = 0;
-	results: unknown[] = [];
+	results: readonly unknown[] = [];
 
 	constructor(grammar: Grammar) {
 		Object.seal(this);
@@ -179,7 +179,7 @@ export class Parser {
 			// - which shows you how this state came to be, step by step.
 			// If there is more than one derivation, we only display the first one.
 			const stateStacks = expectantStates.map(
-				(state) => this.buildFirstStateStack(state, []) ?? ([state] as [State]),
+				(state) => this.buildFirstStateStack(state, []) ?? ([state] as const),
 			);
 
 			// Display each state that is expecting a terminal symbol next.
@@ -196,7 +196,7 @@ export class Parser {
 		return lines.join('\n');
 	}
 
-	displayStateStack(stateStack: State[], lines: string[]) {
+	displayStateStack(stateStack: readonly State[], lines: string[]) {
 		let lastDisplay;
 		let sameDisplayCount = 0;
 
@@ -233,8 +233,8 @@ export class Parser {
 	 */
 	buildFirstStateStack(
 		state: State,
-		visited: State[],
-	): [State, ...State[]] | undefined {
+		visited: readonly State[],
+	): readonly [State, ...State[]] | undefined {
 		if (visited.includes(state)) {
 			// Found cycle, return undefined
 			// to eliminate this path from the results, because

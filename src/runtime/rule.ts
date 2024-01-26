@@ -17,7 +17,7 @@ export class Rule {
 
 	constructor(
 		name: string,
-		symbols: RuntimeSymbol[],
+		symbols: readonly RuntimeSymbol[],
 		postprocess?: PostProcessor,
 	) {
 		Object.seal(this);

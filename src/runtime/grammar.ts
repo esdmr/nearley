@@ -7,7 +7,7 @@ export class Grammar {
 	start;
 	byName = new Map<string, Rule[]>();
 
-	constructor(rules: Rule[], start?: string, lexer?: Lexer) {
+	constructor(rules: readonly Rule[], start?: string, lexer?: Lexer) {
 		Object.seal(this);
 		this.rules = rules;
 		this.start = start ?? this.rules[0]?.name ?? '';
