@@ -1,8 +1,6 @@
-/**
- * @typedef {import('moo').Token} MooToken
- * @implements {MooToken}
- */
-export class StreamLexerToken {
+import type {Lexer, LexerState, Token} from 'moo';
+
+export class StreamLexerToken implements Token {
 	text;
 	offset;
 	lineBreaks;
@@ -13,13 +11,7 @@ export class StreamLexerToken {
 		return this.text;
 	}
 
-	/**
-	 * @param {string} text
-	 * @param {number} offset
-	 * @param {number} line
-	 * @param {number} col
-	 */
-	constructor(text, offset, line, col) {
+	constructor(text: string, offset: number, line: number, col: number) {
 		Object.seal(this);
 		this.text = text;
 		this.lineBreaks = text === '\n' ? 1 : 0;
@@ -33,49 +25,29 @@ export class StreamLexerToken {
 	}
 }
 
-/**
- * @typedef {import('moo').LexerState} MooState
- * @implements {MooState}
- */
-export class StreamLexerState {
+export class StreamLexerState implements LexerState {
 	line;
 	col;
 	state = '';
 
-	/**
-	 * @param {number} line
-	 * @param {number} col
-	 */
-	constructor(line, col) {
+	constructor(line: number, col: number) {
 		Object.seal(this);
 		this.line = line;
 		this.col = col;
 	}
 }
 
-/**
- * @typedef {import('moo').Lexer} MooLexer
- * @implements {MooLexer}
- */
-export class StreamLexer {
-	/** @type {string} */
+export class StreamLexer implements Lexer {
 	buffer = '';
-	/** @type {number} */
 	index = 0;
-	/** @type {number} */
 	line = 1;
-	/** @type {number} */
 	lastLineBreak = 0;
 
 	constructor() {
 		Object.seal(this);
 	}
 
-	/**
-	 * @param {string} data
-	 * @param {StreamLexerState} [state]
-	 */
-	reset(data, state) {
+	reset(data: string, state?: StreamLexerState) {
 		this.buffer = data;
 		this.index = 0;
 		this.line = state ? state.line : 1;
@@ -88,7 +60,7 @@ export class StreamLexer {
 			return;
 		}
 
-		const ch = /** @type {string} */ (this.buffer[this.index++]);
+		const ch = this.buffer[this.index++]!;
 
 		const token = new StreamLexerToken(
 			ch,
@@ -110,39 +82,30 @@ export class StreamLexer {
 	}
 
 	*[Symbol.iterator]() {
-		/** @type {StreamLexerToken | undefined} */
-		let token;
+		let token: StreamLexerToken | undefined;
 
 		while ((token = this.next())) {
 			yield token;
 		}
 	}
 
-	/** @returns {never} */
-	has() {
+	has(): never {
 		throw new Error('StreamLexer has no token types');
 	}
 
-	/** @returns {never} */
-	pushState() {
+	pushState(): never {
 		throw new Error('StreamLexer has no state');
 	}
 
-	/** @returns {never} */
-	popState() {
+	popState(): never {
 		throw new Error('StreamLexer has no state');
 	}
 
-	/** @returns {never} */
-	setState() {
+	setState(): never {
 		throw new Error('StreamLexer has no state');
 	}
 
-	/**
-	 * @param {unknown} _token
-	 * @param {string} message
-	 */
-	formatError(_token, message) {
+	formatError(_token: unknown, message: string) {
 		// Nb. this gets called after consuming the offending token,
 		// so the culprit is index-1
 		const buffer = this.buffer;

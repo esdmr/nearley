@@ -1,8 +1,12 @@
-import {LiteralSymbol, TokenSymbol} from './symbol.js';
+import {LiteralSymbol, TokenSymbol, type RuntimeSymbol} from './symbol.js';
 
-/**
- * @typedef {(d: any, ref?: number, error?: {}, name?: string) => unknown} PostProcessor
- */
+export type PostProcessor = (
+	d: any,
+	ref?: number,
+	error?: Record<string, unknown>,
+	name?: string,
+) => unknown;
+
 export class Rule {
 	static highestId = 0;
 
@@ -11,20 +15,18 @@ export class Rule {
 	symbols;
 	postprocess;
 
-	/**
-	 * @param {string} name
-	 * @param {import('./symbol.js').RuntimeSymbol[]} symbols
-	 * @param {PostProcessor} [postprocess]
-	 */
-	constructor(name, symbols, postprocess) {
+	constructor(
+		name: string,
+		symbols: RuntimeSymbol[],
+		postprocess?: PostProcessor,
+	) {
 		Object.seal(this);
 		this.name = name;
 		this.symbols = symbols; // A list of literal | regex class | nonterminal
 		this.postprocess = postprocess;
 	}
 
-	/** @param {number} withCursorAt */
-	toString(withCursorAt) {
+	toString(withCursorAt: number) {
 		const symbolSequence =
 			withCursorAt === undefined
 				? this.symbols.map((s) => getSymbolShortDisplay(s)).join(' ')
@@ -39,8 +41,7 @@ export class Rule {
 	}
 }
 
-/** @param {import('./symbol.js').RuntimeSymbol} symbol */
-function getSymbolShortDisplay(symbol) {
+function getSymbolShortDisplay(symbol: RuntimeSymbol) {
 	if (typeof symbol === 'string') {
 		return symbol;
 	}
@@ -57,5 +58,5 @@ function getSymbolShortDisplay(symbol) {
 		return `%${symbol.token}`;
 	}
 
-	throw new Error(`Unknown symbol type: ${symbol}`);
+	throw new Error(`Unknown symbol type: (${typeof symbol}) ${String(symbol)}`);
 }

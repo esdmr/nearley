@@ -1,49 +1,43 @@
 // Generated automatically by nearley, version 3.0.3
 // https://github.com/esdmr/nearley (fork of https://github.com/Hardmath123/nearley)
-// @ts-nocheck
 import * as nearley from "../runtime/index.js";
 
 	import {EbnfSymbol, MacroParameterSymbol, MacroCallSymbol, SubExpressionSymbol} from './symbol.js';
 	import {Expression, Production, RawSourceCode, Include, Config, MacroDefinition} from './ast.js';
 
-	function getValue([{value}]) {
+	function getValue([{value}]: [nearley.lexer.Token]) {
 		return value;
 	}
 
-	function literals(list) {
-		const rules = {};
-		for (const lit of list) {
-			rules[lit] = {match: lit, next: 'main'};
-		}
-
-		return rules;
+	function literals(list: string[]) {
+		return Object.fromEntries(list.map(i => [i, {match: i, next: 'main'}]));
 	}
 
 	const rules = Object.assign(
 		{
-			ws: {match: /\s+/, lineBreaks: true, next: 'main'},
-			comment: /#.*/,
-			arrow: {match: /[=-]+>/, next: 'main'},
+			ws: {match: /\s+/u, lineBreaks: true, next: 'main'},
+			comment: /#.*/u,
+			arrow: {match: /[=-]+>/u, next: 'main'},
 			js: {
-				match: /\{\%(?:[^%]|%[^}])*\%\}/,
-				value: (x) => x.slice(2, -2),
+				match: /\{%(?:[^%]|%[^}])*%\}/u,
+				value: (x: string) => x.slice(2, -2),
 				lineBreaks: true,
 			},
 			word: {
-				match: /[\w?+]+/,
+				match: /[\w?+]+/u,
 				next: 'afterWord',
 				type: nearley.lexer.keywords({
 					keyword_null: 'null',
 				}),
 			},
 			string: {
-				match: /"(?:[^\\"\n]|\\["\\/bfnrt]|\\u[a-fA-F\d]{4})*"/,
-				value: (x) => JSON.parse(x),
+				match: /"(?:[^\\"\n]|\\["\\/bfnrt]|\\u[a-fA-F\d]{4})*"/u,
+				value: (x: string) => JSON.parse(x),
 				next: 'main',
 			},
 			btstring: {
-				match: /`[^`]*`/,
-				value: (x) => x.slice(1, -1),
+				match: /`[^`]*`/u,
+				value: (x: string) => x.slice(1, -1),
 				next: 'main',
 				lineBreaks: true,
 			},
@@ -65,24 +59,26 @@ import * as nearley from "../runtime/index.js";
 	);
 
 	const lexer = nearley.lexer.states({
-		main: Object.assign({}, rules, {
+		main: {
+			...rules,
 			charclass: {
-				match: /\.|\[(?:\\.|[^\\\n])+?]/,
+				match: /\.|\[(?:\\.|[^\\\n])+?\]/u,
 			},
-		}),
+		},
 		// Both macro arguments and charclasses are both enclosed in [ ].
 		// We disambiguate based on whether the previous token was a `word`.
-		afterWord: Object.assign({}, rules, {
+		afterWord: {
+			...rules,
 			'[': {match: '[', next: 'main'},
-		}),
+		},
 	});
 
-	function insensitive({value}) {
+	function insensitive({value}: nearley.lexer.Token) {
 		const result = [];
-		for (let i = 0; i < value.length; i++) {
-			const c = value.charAt(i);
+
+		for (const c of value) {
 			if (c.toUpperCase() !== c || c.toLowerCase() !== c) {
-				result.push(new RegExp(`[${c.toLowerCase()}${c.toUpperCase()}]`));
+				result.push(new RegExp(`[${c.toLowerCase()}${c.toUpperCase()}]`, 'u'));
 			} else {
 				result.push(new nearley.LiteralSymbol(c));
 			}
@@ -132,7 +128,7 @@ export default new nearley.Grammar([
 	new nearley.Rule("word", [new nearley.TokenSymbol("keyword_null")],  getValue ),
 	new nearley.Rule("string", [new nearley.TokenSymbol("string")],  ([{value}]) => new nearley.LiteralSymbol(value) ),
 	new nearley.Rule("string", [new nearley.TokenSymbol("btstring")],  ([{value}]) => new nearley.LiteralSymbol(value) ),
-	new nearley.Rule("charclass", [new nearley.TokenSymbol("charclass")],  ([a]) => new RegExp(a) ),
+	new nearley.Rule("charclass", [new nearley.TokenSymbol("charclass")],  ([a]) => new RegExp(a, 'u') ),
 	new nearley.Rule("js", [new nearley.TokenSymbol("js")],  ([{value}]) => new RawSourceCode(value) ),
 	new nearley.Rule("_$1", ["ws"], nearley.id),
 	new nearley.Rule("_$1", [], (_) => undefined),

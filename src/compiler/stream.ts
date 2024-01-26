@@ -1,22 +1,18 @@
 // Node-only
 
 import {Writable} from 'node:stream';
+import type {Parser} from '../runtime/parser.js';
 
 export class StreamWrapper extends Writable {
-	/** @param {import("../runtime/parser.js").Parser} parser */
-	constructor(parser) {
+	#parser;
+
+	constructor(parser: Parser) {
 		super();
-		this._parser = parser;
+		this.#parser = parser;
 	}
 
-	/**
-	 * @override
-	 * @param {unknown} chunk
-	 * @param {unknown} _encoding
-	 * @param {() => void} callback
-	 */
-	_write(chunk, _encoding, callback) {
-		this._parser.feed(String(chunk));
+	override _write(chunk: unknown, _encoding: unknown, callback: () => void) {
+		this.#parser.feed(String(chunk));
 		callback();
 	}
 }

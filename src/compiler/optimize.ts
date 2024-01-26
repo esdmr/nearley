@@ -1,20 +1,17 @@
+import type {Rule} from './ast.js';
+import type {Compiler} from './compile.js';
+import type {RuntimeSymbol} from './symbol.js';
 import {Uniquer} from './uniquer.js';
 
 /**
  * Converts rules to a string to be used in a hash map.
- *
- * @param {import('./ast.js').Rule[]} rules
  */
-function hashRules(rules) {
+function hashRules(rules: Rule[]) {
 	return rules
 		.map((i) =>
 			JSON.stringify({
 				s: i.symbols.map((j) =>
-					j === i.name
-						? ''
-						: j instanceof RegExp
-						? {regex: String(j)}
-						: j,
+					j === i.name ? '' : j instanceof RegExp ? {regex: String(j)} : j,
 				),
 				p: i.postprocess,
 			}),
@@ -34,8 +31,6 @@ const arrayCollator = new Intl.Collator('en', {
  *
  * @see {@link arrayCollator} The collator instance which is used to compare the
  * strings.
- * @param {string[]} a
- * @param {string[]} b
  * @returns - a number representing the order of inputs, like the
  * {@link Array.sort} comparator:
  *
@@ -43,12 +38,12 @@ const arrayCollator = new Intl.Collator('en', {
  * > than the second argument, zero if they're equal, and a positive value
  * > otherwise.
  */
-function compareArray(a, b) {
+function compareArray(a: string[], b: string[]) {
 	const i = a.length - b.length;
 	if (i) return i;
 
 	for (const [index, x] of a.entries()) {
-		const y = /** @type {string} */ (b[index]);
+		const y = b[index]!;
 		const i = arrayCollator.compare(x, y);
 		if (i) return i;
 	}
@@ -58,12 +53,9 @@ function compareArray(a, b) {
 
 /**
  * Generate a map of rules according to their names.
- *
- * @param {import("./compile.js").Compiler} result
  */
-function groupRulesByName(result) {
-	/** @type {Map<string, import('./ast.js').Rule[]>} */
-	const rulesByName = new Map();
+function groupRulesByName(result: Compiler) {
+	const rulesByName = new Map<string, Rule[]>();
 
 	for (const rule of result.rules) {
 		const rules = rulesByName.get(rule.name);
@@ -80,12 +72,9 @@ function groupRulesByName(result) {
 
 /**
  * Generates a map of rule hashes to their names.
- *
- * @param {Map<string, import("./ast.js").Rule[]>} rulesByName
  */
-function getRuleHashes(rulesByName) {
-	/** @type {Map<string, string[]>} */
-	const ruleHashes = new Map();
+function getRuleHashes(rulesByName: Map<string, Rule[]>) {
+	const ruleHashes = new Map<string, string[]>();
 
 	for (const [name, rules] of rulesByName) {
 		const key = hashRules(rules);
@@ -105,10 +94,8 @@ function getRuleHashes(rulesByName) {
 /**
  * Pick the simplest rule name to be used when generating the canonical rule
  * names.
- *
- * @param {string[]} ruleNames
  */
-function getPreferredRuleName(ruleNames) {
+function getPreferredRuleName(ruleNames: string[]) {
 	return (
 		ruleNames
 			.map((i) => i.split('$'))
@@ -120,12 +107,9 @@ function getPreferredRuleName(ruleNames) {
 /**
  * Generate the replacement table for canonical rule names. Will pick the
  * simplest rule name out of equivalent rules.
- *
- * @param {Map<string, string[]>} ruleHashes
  */
-function getRuleCanonicalNames(ruleHashes) {
-	/** @type {Map<string, string>} */
-	const replacements = new Map();
+function getRuleCanonicalNames(ruleHashes: Map<string, string[]>) {
+	const replacements = new Map<string, string>();
 
 	for (const rules of ruleHashes.values()) {
 		const first = getPreferredRuleName(rules);
@@ -146,19 +130,17 @@ function getRuleCanonicalNames(ruleHashes) {
  * a requirement, if replacement `A -> B` is in the table, `B` should not be in
  * the table and should actually be defined. Alternatively, if `A` is unused,
  * `B` may be anything, which causes `A` to be effectively deleted.
- *
- * @param {import("./compile.js").Compiler} result
- * @param {Map<string, string>} replacements
  */
-function applyRuleReplacements(result, replacements) {
+function applyRuleReplacements(
+	result: Compiler,
+	replacements: Map<string, string>,
+) {
 	result.rules = result.rules.filter((i) => !replacements.has(i.name));
 
 	for (const rule of result.rules) {
 		for (const [index, item] of rule.symbols.entries()) {
 			if (typeof item === 'string' && replacements.has(item)) {
-				rule.symbols[index] = /** @type {string} */ (
-					replacements.get(item)
-				);
+				rule.symbols[index] = replacements.get(item)!;
 			}
 		}
 	}
@@ -166,10 +148,8 @@ function applyRuleReplacements(result, replacements) {
 
 /**
  * Combine equivalent rules to the one with the simplest name.
- *
- * @param {import("./compile.js").Compiler} result
  */
-function combineRules(result) {
+function combineRules(result: Compiler) {
 	const rulesByName = groupRulesByName(result);
 	const ruleHashes = getRuleHashes(rulesByName);
 	const replacements = getRuleCanonicalNames(ruleHashes);
@@ -180,12 +160,9 @@ function combineRules(result) {
 
 /**
  * Get a set of rules which are used by other rules or are the starting rule.
- *
- * @param {import("./compile.js").Compiler} result
  */
-function getUsedRules(result) {
-	/** @type {Set<import('./symbol.js').RuntimeSymbol>} */
-	const usedSymbols = new Set([result.start]);
+function getUsedRules(result: Compiler) {
+	const usedSymbols = new Set<RuntimeSymbol>([result.start]);
 
 	for (const rule of result.rules) {
 		for (const item of rule.symbols) {
@@ -198,11 +175,11 @@ function getUsedRules(result) {
 
 /**
  * Generates the replacement table to get rid of unused rules.
- *
- * @param {import("./compile.js").Compiler} result
- * @param {Set<import("./symbol.js").RuntimeSymbol>} usedSymbols
  */
-function getUnusedRuleReplacements(result, usedSymbols) {
+function getUnusedRuleReplacements(
+	result: Compiler,
+	usedSymbols: Set<RuntimeSymbol>,
+) {
 	return new Map(
 		result.rules
 			.filter((i) => !usedSymbols.has(i.name))
@@ -212,10 +189,8 @@ function getUnusedRuleReplacements(result, usedSymbols) {
 
 /**
  * Removes rules which do not appear in the RHS or is not the starting rule.
- *
- * @param {import("./compile.js").Compiler} result
  */
-function removeUnusedRules(result) {
+function removeUnusedRules(result: Compiler) {
 	const usedSymbols = getUsedRules(result);
 	const replacements = getUnusedRuleReplacements(result, usedSymbols);
 
@@ -225,23 +200,16 @@ function removeUnusedRules(result) {
 
 /**
  * Simplify the end of compiler generated rule names.
- *
- * @param {import("./compile.js").Compiler} result
  */
-function shortenRuleNameEnding(result) {
+function shortenRuleNameEnding(result: Compiler) {
 	const uniqueNames = new Uniquer();
-	/** @type {Map<string, string>} */
-	const minNames = new Map();
+	const minNames = new Map<string, string>();
 
-	/** @param {string} name */
-	function minifyName(name) {
-		if (minNames.has(name))
-			return /** @type {string} */ (minNames.get(name));
+	function minifyName(name: string) {
+		if (minNames.has(name)) return minNames.get(name)!;
 		if (!name.includes('$')) return name;
 
-		const min = uniqueNames.get(
-			/** @type {string} */ (name.split('$', 1)[0]),
-		);
+		const min = uniqueNames.get(name.split('$', 1)[0]!);
 		minNames.set(name, min);
 		return min;
 	}
@@ -261,10 +229,8 @@ function shortenRuleNameEnding(result) {
 
 /**
  * Run all optimization phases.
- *
- * @param {import('./compile.js').Compiler} result
  */
-export function optimize(result) {
+export function optimize(result: Compiler) {
 	combineRules(result);
 	removeUnusedRules(result);
 	shortenRuleNameEnding(result);

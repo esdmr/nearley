@@ -1,19 +1,16 @@
+import type {Lexer} from 'moo';
+import type {Rule} from './rule.js';
+
 export class Grammar {
 	lexer;
 	rules;
 	start;
-	/** @type {Map<string, import('./rule.js').Rule[]>} */
-	byName = new Map();
+	byName = new Map<string, Rule[]>();
 
-	/**
-	 * @param {import('./rule.js').Rule[]} rules
-	 * @param {string} [start]
-	 * @param {import('moo').Lexer} [lexer]
-	 */
-	constructor(rules, start, lexer) {
+	constructor(rules: Rule[], start?: string, lexer?: Lexer) {
 		Object.seal(this);
 		this.rules = rules;
-		this.start = start || this.rules[0]?.name || '';
+		this.start = start ?? this.rules[0]?.name ?? '';
 		this.lexer = lexer;
 		const byName = this.byName;
 

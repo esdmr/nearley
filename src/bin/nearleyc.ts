@@ -2,6 +2,7 @@
 
 import fs from 'node:fs';
 import process from 'node:process';
+import assert from 'node:assert';
 import {Command} from '@commander-js/extra-typings';
 import {compile} from '../compiler/compile.js';
 import {generate} from '../compiler/generate.js';
@@ -9,9 +10,17 @@ import {lint} from '../compiler/lint.js';
 import bootstrap from '../compiler/nearley-language-bootstrapped.js';
 import {StreamWrapper} from '../compiler/stream.js';
 import {Parser} from '../runtime/parser.js';
+import type {Node} from '../compiler/ast.js';
 
-const pkg = JSON.parse(
+const pkg: unknown = JSON.parse(
 	fs.readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
+);
+
+assert(
+	typeof pkg === 'object' &&
+		pkg &&
+		'version' in pkg &&
+		typeof pkg.version === 'string',
 );
 
 const program = new Command()
@@ -27,15 +36,15 @@ const program = new Command()
 	.option('-O, --optimize', 'combine equal rules')
 	.parse(process.argv);
 
-/** @typedef {typeof options} NearleyOptions */
+export type NearleyOptions = typeof options;
+
 const options = {...program.opts(), args: program.args, version: pkg.version};
 
 const input = options.args[0]
 	? fs.createReadStream(options.args[0])
 	: process.stdin;
 
-/** @type {NodeJS.WritableStream} */
-const output =
+const output: NodeJS.WritableStream =
 	typeof options.out === 'string'
 		? fs.createWriteStream(options.out)
 		: process.stdout;
@@ -43,10 +52,7 @@ const parser = new Parser(bootstrap);
 
 input.pipe(new StreamWrapper(parser)).on('finish', () => {
 	parser.feed('\n');
-	const c = compile(
-		/** @type {import('../compiler/ast.js').Node[]} */ (parser.results[0]),
-		options,
-	);
+	const c = compile(parser.results[0] as Node[], options);
 
 	if (!options.quiet) {
 		lint(c);

@@ -1,27 +1,18 @@
 import {Parser} from './parser.js';
+import type {Rule} from './rule.js';
 
 // A State is a rule at a position from a given starting point in the input stream (reference)
 export class State {
-	/** @type {State} */
-	left = this;
-	/** @type {State | StateChild | undefined} */
-	right;
-	/** @type {unknown} */
-	data = [];
+	left: State = this;
+	right: State | StateChild | undefined;
+	data: unknown = [];
 	rule;
 	dot;
 	reference;
-	/** @type {State[]} */
-	wantedBy;
+	wantedBy: State[];
 	isComplete;
 
-	/**
-	 * @param {import('./rule.js').Rule} rule
-	 * @param {number} dot
-	 * @param {number} reference
-	 * @param {State[]} wantedBy
-	 */
-	constructor(rule, dot, reference, wantedBy) {
+	constructor(rule: Rule, dot: number, reference: number, wantedBy: State[]) {
 		Object.seal(this);
 		this.rule = rule;
 		this.dot = dot;
@@ -31,13 +22,10 @@ export class State {
 	}
 
 	toString() {
-		return `{${this.rule.toString(this.dot)}}, from: ${
-			this.reference || 0
-		}`;
+		return `{${this.rule.toString(this.dot)}}, from: ${this.reference || 0}`;
 	}
 
-	/** @param {State | StateChild} child */
-	nextState(child) {
+	nextState(child: State | StateChild) {
 		const state = new State(
 			this.rule,
 			this.dot + 1,
@@ -57,11 +45,9 @@ export class State {
 	}
 
 	build() {
-		/** @type {unknown[]} */
-		const children = [];
-		/** @type {State} */
-		// eslint-disable-next-line unicorn/no-this-assignment
-		let node = this;
+		const children: unknown[] = [];
+		// eslint-disable-next-line unicorn/no-this-assignment, @typescript-eslint/no-this-alias
+		let node: State = this;
 
 		do {
 			children.push(node.right?.data);
@@ -90,13 +76,12 @@ export class StateChild {
 	isToken;
 	reference;
 
-	/**
-	 * @param {unknown} data
-	 * @param {unknown} token
-	 * @param {boolean} isToken
-	 * @param {number} reference
-	 */
-	constructor(data, token, isToken, reference) {
+	constructor(
+		data: unknown,
+		token: unknown,
+		isToken: boolean,
+		reference: number,
+	) {
 		Object.seal(this);
 		this.data = data;
 		this.token = token;

@@ -1,15 +1,9 @@
-/**
- * @typedef {string | RegExp
- *     | LiteralSymbol
- *     | TokenSymbol
- * } RuntimeSymbol
- */
+export type RuntimeSymbol = string | RegExp | LiteralSymbol | TokenSymbol;
 
 export class LiteralSymbol {
 	value;
 
-	/** @param {string} value */
-	constructor(value) {
+	constructor(value: string) {
 		Object.seal(this);
 		this.value = value;
 	}
@@ -18,8 +12,7 @@ export class LiteralSymbol {
 export class TokenSymbol {
 	token;
 
-	/** @param {string} token */
-	constructor(token) {
+	constructor(token: string) {
 		Object.seal(this);
 		this.token = token;
 	}

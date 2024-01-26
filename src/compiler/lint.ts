@@ -1,11 +1,9 @@
 // Node-only
 
-/**
- * @param {import('./compile.js').Compiler} compiler
- */
-function lintNames({rules}) {
-	/** @type {string[]} */
-	const all = [];
+import type {Compiler} from './compile.js';
+
+function lintNames({rules}: Compiler) {
+	const all: string[] = [];
 
 	for (const {name} of rules) {
 		all.push(name);
@@ -20,9 +18,6 @@ function lintNames({rules}) {
 	}
 }
 
-/**
- * @param {import("./compile.js").Compiler} compiler
- */
-export function lint(compiler) {
+export function lint(compiler: Compiler) {
 	lintNames(compiler);
 }

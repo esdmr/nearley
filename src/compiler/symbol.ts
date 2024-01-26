@@ -1,21 +1,19 @@
-/**
- * @typedef {import('../runtime/symbol.js').RuntimeSymbol
- *     | MacroParameterSymbol
- *     | MacroCallSymbol
- *     | EbnfSymbol
- *     | SubExpressionSymbol
- * } CompilerSymbol
- */
+import type {Expression} from './ast.js';
+import type {RuntimeSymbol} from './symbol.js';
+
+export type CompilerSymbol =
+	| RuntimeSymbol
+	| MacroParameterSymbol
+	| MacroCallSymbol
+	| EbnfSymbol
+	| SubExpressionSymbol;
 
 export * from '../runtime/symbol.js';
 
 export class MacroParameterSymbol {
 	name;
 
-	/**
-	 * @param {string} name
-	 */
-	constructor(name) {
+	constructor(name: string) {
 		Object.seal(this);
 		this.name = name;
 	}
@@ -25,11 +23,7 @@ export class MacroCallSymbol {
 	name;
 	args;
 
-	/**
-	 * @param {string} name
-	 * @param {import('./ast.js').Expression[]} args
-	 */
-	constructor(name, args) {
+	constructor(name: string, args: Expression[]) {
 		Object.seal(this);
 		this.name = name;
 		this.args = args;
@@ -44,11 +38,7 @@ export class EbnfSymbol {
 	expression;
 	modifier;
 
-	/**
-	 * @param {CompilerSymbol} expression
-	 * @param {string} modifier
-	 */
-	constructor(expression, modifier) {
+	constructor(expression: CompilerSymbol, modifier: string) {
 		Object.seal(this);
 		this.expression = expression;
 		this.modifier = modifier;
@@ -58,10 +48,7 @@ export class EbnfSymbol {
 export class SubExpressionSymbol {
 	expression;
 
-	/**
-	 * @param {import('./ast.js').Expression[]} expression
-	 */
-	constructor(expression) {
+	constructor(expression: Expression[]) {
 		Object.seal(this);
 		this.expression = expression;
 	}

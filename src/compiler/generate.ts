@@ -1,11 +1,9 @@
+import type {Compiler} from './compile.js';
 import {defaultGenerator, generators} from './generator/index.js';
 
-/**
- * @param {import('./compile.js').Compiler} parser
- */
-export function generate(parser) {
+export function generate(parser: Compiler) {
 	const preprocessor =
-		parser.config.get('preprocessor')?.value || defaultGenerator;
+		parser.config.get('preprocessor')?.value ?? defaultGenerator;
 	const generator = generators.get(preprocessor);
 
 	if (!generator) {

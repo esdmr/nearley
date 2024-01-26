@@ -1,9 +1,8 @@
 export class Uniquer {
-	#count = new Map();
+	#count = new Map<string, number>();
 
-	/** @param {string} name */
-	get(name) {
-		const un = (this.#count.get(name) || 0) + 1;
+	get(name: string) {
+		const un = (this.#count.get(name) ?? 0) + 1;
 		this.#count.set(name, un);
 		return `${name}$${un}`;
 	}

@@ -1,6 +1,11 @@
-/**
- * @typedef {Production | MacroDefinition | Config | Include | RawSourceCode} Node
- */
+import type {CompilerSymbol, RuntimeSymbol} from './symbol.js';
+
+export type Node =
+	| Production
+	| MacroDefinition
+	| Config
+	| Include
+	| RawSourceCode;
 
 export class Rule {
 	name;
@@ -9,12 +14,11 @@ export class Rule {
 	/** Specific to tsd generator */
 	postprocessProcessed = false;
 
-	/**
-	 * @param {string} name
-	 * @param {import('../runtime/symbol.js').RuntimeSymbol[]} symbols
-	 * @param {RawSourceCode | string} [postprocess]
-	 */
-	constructor(name, symbols, postprocess) {
+	constructor(
+		name: string,
+		symbols: RuntimeSymbol[],
+		postprocess?: RawSourceCode | string,
+	) {
 		Object.seal(this);
 		this.name = name;
 		this.symbols = symbols;
@@ -26,11 +30,7 @@ export class Expression {
 	symbols;
 	postprocess;
 
-	/**
-	 * @param {import('./symbol.js').CompilerSymbol[]} symbols
-	 * @param {RawSourceCode | string} [postprocess]
-	 */
-	constructor(symbols, postprocess) {
+	constructor(symbols: CompilerSymbol[], postprocess?: RawSourceCode | string) {
 		Object.seal(this);
 		this.symbols = symbols;
 		this.postprocess = postprocess;
@@ -41,11 +41,7 @@ export class Production {
 	name;
 	expressions;
 
-	/**
-	 * @param {string} name
-	 * @param {Expression[]} expressions
-	 */
-	constructor(name, expressions) {
+	constructor(name: string, expressions: Expression[]) {
 		Object.seal(this);
 		this.name = name;
 		this.expressions = expressions;
@@ -55,10 +51,7 @@ export class Production {
 export class RawSourceCode {
 	source;
 
-	/**
-	 * @param {string} source
-	 */
-	constructor(source) {
+	constructor(source: string) {
 		Object.seal(this);
 		this.source = source;
 	}
@@ -71,10 +64,7 @@ export class RawSourceCode {
 export class Include {
 	path;
 
-	/**
-	 * @param {string} path
-	 */
-	constructor(path) {
+	constructor(path: string) {
 		Object.seal(this);
 		this.path = path;
 	}
@@ -84,11 +74,7 @@ export class Config {
 	name;
 	value;
 
-	/**
-	 * @param {string} name
-	 * @param {string} value
-	 */
-	constructor(name, value) {
+	constructor(name: string, value: string) {
 		Object.seal(this);
 		this.name = name;
 		this.value = value;
@@ -128,12 +114,7 @@ export class MacroDefinition {
 	parameters;
 	expression;
 
-	/**
-	 * @param {string} name
-	 * @param {string[]} parameters
-	 * @param {Expression[]} expression
-	 */
-	constructor(name, parameters, expression) {
+	constructor(name: string, parameters: string[], expression: Expression[]) {
 		Object.seal(this);
 		this.name = name;
 		this.parameters = parameters;

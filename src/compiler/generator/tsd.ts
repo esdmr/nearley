@@ -1,13 +1,11 @@
-import {RawSourceCode} from '../ast.js';
+import {RawSourceCode, type Rule} from '../ast.js';
+import type {Compiler} from '../compile.js';
 import {builtinPostprocessors} from './utils.js';
 
-/**
- * @template T
- * @param {Iterable<T>} [a]
- * @param {Iterable<T>[]} more
- * @returns {Generator<T[]>}
- */
-function* cartesianProduct(a, ...more) {
+function* cartesianProduct<T>(
+	a?: Iterable<T>,
+	...more: Array<Iterable<T>>
+): Generator<T[]> {
 	if (!a) {
 		return yield [];
 	}
@@ -19,10 +17,7 @@ function* cartesianProduct(a, ...more) {
 	}
 }
 
-/**
- * @param {import('../compile.js').Compiler} parser
- */
-export function* tsd({version, body, rules, config}) {
+export function* tsd({version, body, rules, config}: Compiler) {
 	yield `// Generated automatically by nearley, version ${version}`;
 	yield '// https://github.com/esdmr/nearley (fork of https://github.com/Hardmath123/nearley)';
 
@@ -37,8 +32,7 @@ export function* tsd({version, body, rules, config}) {
 	yield 'const __t = 0 as unknown as nearley.lexer.Token;';
 	yield* body;
 
-	/** @type {Map<string, import('../ast.js').Rule[]>} */
-	const map = new Map();
+	const map = new Map<string, Rule[]>();
 
 	for (const rule of rules) {
 		if (typeof rule.postprocess === 'string') {
@@ -63,9 +57,8 @@ export function* tsd({version, body, rules, config}) {
 		}
 	}
 
-	/** @param {string} string */
-	function normalize(string) {
-		return string.replaceAll(/\s{2,}/g, ' ').trim();
+	function normalize(string: string) {
+		return string.replaceAll(/\s{2,}/gu, ' ').trim();
 	}
 
 	const defaultDepth = Math.max(
@@ -74,21 +67,16 @@ export function* tsd({version, body, rules, config}) {
 	);
 	const macroDepth = Math.min(Number(config.get('tsd_macro_depth')) || 1, 1);
 
-	/**
-	 * @param {string} name
-	 * @returns {Generator<string>}
-	 */
-	function* expandRules(name, depth = defaultDepth) {
+	function* expandRules(name: string, depth = defaultDepth): Generator<string> {
 		for (const rule of map.get(name) ?? []) {
 			if (!rule.postprocessProcessed) {
-				rule.postprocess = normalize(String(rule.postprocess || ''));
-				if (rule.postprocess)
-					rule.postprocess = `(${rule.postprocess})`;
+				rule.postprocess = normalize(String(rule.postprocess ?? ''));
+				if (rule.postprocess) rule.postprocess = `(${rule.postprocess})`;
 				rule.postprocessProcessed = true;
 			}
 
 			if (depth <= 1) {
-				yield rule.postprocess ? `${rule.postprocess}(__a)` : '__a';
+				yield rule.postprocess ? `${String(rule.postprocess)}(__a)` : '__a';
 				continue;
 			}
 
@@ -104,7 +92,7 @@ export function* tsd({version, body, rules, config}) {
 						: ['__t'],
 				),
 			)) {
-				yield `${rule.postprocess}([${combination
+				yield `${String(rule.postprocess)}([${combination
 					.map((i) => normalize(i))
 					.join(', ')}] as const)`;
 			}

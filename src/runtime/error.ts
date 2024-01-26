@@ -1,16 +1,13 @@
 export class ParserError extends Error {
-	/** @override */
-	name = 'ParserError';
+	override name = 'ParserError';
 	offset;
 	token;
 
-	/**
-	 *
-	 * @param {number} offset
-	 * @param {unknown} token
-	 * @param  {Parameters<ErrorConstructor>} args
-	 */
-	constructor(offset, token, ...args) {
+	constructor(
+		offset: number,
+		token: unknown,
+		...args: Parameters<ErrorConstructor>
+	) {
 		super(...args);
 		this.offset = offset;
 		this.token = token;
@@ -18,6 +15,5 @@ export class ParserError extends Error {
 }
 
 export class LexerError extends ParserError {
-	/** @override */
-	name = 'LexerError';
+	override name = 'LexerError';
 }

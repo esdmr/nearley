@@ -1,24 +1,18 @@
-import {State} from './state.js';
+import type {LexerState} from 'moo';
+import {State, type StateChild} from './state.js';
 import {Parser} from './parser.js';
+import type {Grammar} from './grammar.js';
 
 export class Column {
-	/** @type {import('moo').LexerState | undefined} */
-	lexerState;
+	lexerState: LexerState | undefined;
 	grammar;
 	index;
-	/** @type {State[]} */
-	states = [];
-	wants = new Map(); // States indexed by the non-terminal they expect
-	/** @type {State[]} */
-	scannable = []; // List of states that expect a token
-	/** @type {Map<string, State[]>} */
-	completed = new Map(); // States that are nullable
+	states: State[] = [];
+	wants = new Map<string, State[]>(); // States indexed by the non-terminal they expect
+	scannable: State[] = []; // List of states that expect a token
+	completed = new Map<string, State[]>(); // States that are nullable
 
-	/**
-	 * @param {import('./grammar.js').Grammar} grammar
-	 * @param {number} index
-	 */
-	constructor(grammar, index) {
+	constructor(grammar: Grammar, index: number) {
 		Object.seal(this);
 		this.grammar = grammar;
 		this.index = index;
@@ -38,7 +32,7 @@ export class Column {
 					const wantedBy = state.wantedBy;
 					for (let i = wantedBy.length; i--; ) {
 						// This line is hot
-						const left = /** @type {State} */ (wantedBy[i]);
+						const left = wantedBy[i]!;
 						this.complete(left, state);
 					}
 
@@ -65,8 +59,8 @@ export class Column {
 				}
 
 				// Predict
-				if (wants.get(exp)) {
-					wants.get(exp).push(state);
+				if (wants.has(exp)) {
+					wants.get(exp)!.push(state);
 
 					for (const right of completed.get(exp) ?? []) {
 						this.complete(state, right);
@@ -79,22 +73,17 @@ export class Column {
 		}
 	}
 
-	/** @param {string} exp */
-	predict(exp) {
-		const rules = this.grammar.byName.get(exp) || [];
+	predict(exp: string) {
+		const rules = this.grammar.byName.get(exp) ?? [];
 
 		for (const r of rules) {
-			const wantedBy = this.wants.get(exp);
+			const wantedBy = this.wants.get(exp)!;
 			const s = new State(r, 0, this.index, wantedBy);
 			this.states.push(s);
 		}
 	}
 
-	/**
-	 * @param {State} left
-	 * @param {State | import('./state.js').StateChild} right
-	 */
-	complete(left, right) {
+	complete(left: State, right: State | StateChild) {
 		const copy = left.nextState(right);
 		this.states.push(copy);
 	}

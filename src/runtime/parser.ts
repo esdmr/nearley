@@ -1,33 +1,29 @@
+import type {Lexer, LexerState, Token} from 'moo';
 import {Column} from './column.js';
 import {LexerError, ParserError} from './error.js';
 import {StreamLexer} from './lexer.js';
-import {StateChild} from './state.js';
-import {LiteralSymbol, TokenSymbol} from './symbol.js';
+import {type State, StateChild} from './state.js';
+import {LiteralSymbol, TokenSymbol, type RuntimeSymbol} from './symbol.js';
+import type {Grammar} from './grammar.js';
 
 export class Parser {
 	// Create a reserved token for indicating a parse fail
 	static fail = {};
 
 	grammar;
-	/** @type {import('moo').Lexer} */
-	lexer;
-	/** @type {import('moo').LexerState | undefined} */
-	lexerState;
-	table;
+	lexer: Lexer;
+	lexerState: LexerState | undefined;
+	table: Array<Column | undefined>;
 	current = 0;
-	/** @type {unknown[]} */
-	results = [];
+	results: unknown[] = [];
 
-	/**
-	 * @param {import('./grammar.js').Grammar} grammar
-	 */
-	constructor(grammar) {
+	constructor(grammar: Grammar) {
 		Object.seal(this);
 
 		this.grammar = grammar;
 
 		// Setup lexer
-		this.lexer = grammar.lexer || new StreamLexer();
+		this.lexer = grammar.lexer ?? new StreamLexer();
 
 		// Setup a table
 		const column = new Column(grammar, 0);
@@ -41,8 +37,7 @@ export class Parser {
 		column.process();
 	}
 
-	/** @param {string} chunk */
-	feed(chunk) {
+	feed(chunk: string) {
 		const lexer = this.lexer;
 		lexer.reset(chunk, this.lexerState);
 
@@ -63,33 +58,33 @@ export class Parser {
 				this.table.push(nextColumn);
 				throw new LexerError(
 					this.current,
-					/** @type {Record<string, unknown>} */ (error)?.token,
+					typeof error === 'object' && error && 'token' in error
+						? error.token
+						: undefined,
 					this.reportLexerError(error),
 				);
 			}
 
 			// We add new states to table[current+1]
-			column = /** @type {Column} */ (this.table[this.current]);
+			column = this.table[this.current]!;
 
 			// GC unused states
-			delete this.table[this.current - 1];
+			this.table[this.current - 1] = undefined;
 
 			const n = this.current + 1;
 			const nextColumn = new Column(this.grammar, n);
 			this.table.push(nextColumn);
 
 			// Advance all tokens that expect the symbol
-			const literal = token.text === undefined ? token.value : token.text;
+			const literal = token.text ?? token.value;
 			const value = lexer instanceof StreamLexer ? token.value : token;
 			const scannable = column.scannable;
 			for (let w = scannable.length; w--; ) {
-				const state = /** @type {import('./state.js').State} */ (
-					scannable[w]
-				);
-				const expect =
-					/** @type {Exclude<import('./symbol.js').RuntimeSymbol, string>} */ (
-						state.rule.symbols[state.dot]
-					);
+				const state = scannable[w]!;
+				const expect = state.rule.symbols[state.dot] as Exclude<
+					RuntimeSymbol,
+					string
+				>;
 				// Try to consume the token
 				// either regex or literal
 				if (
@@ -119,11 +114,7 @@ export class Parser {
 			// If needed, throw an error:
 			if (nextColumn.states.length === 0) {
 				// No states at all! This is not good.
-				throw new ParserError(
-					this.current,
-					token,
-					this.reportError(token),
-				);
+				throw new ParserError(this.current, token, this.reportError(token));
 			}
 
 			this.current++;
@@ -140,21 +131,14 @@ export class Parser {
 		return this;
 	}
 
-	/** @param {unknown} lexerError */
-	reportLexerError(lexerError) {
+	reportLexerError(lexerError: unknown) {
 		let tokenDisplay;
 		let lexerMessage;
 		// Planning to add a token property to moo's thrown error
 		// even on erroring tokens to be used in error display below
-		if (
-			typeof lexerError === 'object' &&
-			lexerError &&
-			'token' in lexerError
-		) {
-			const token = /** @type {import('moo').Token} */ (lexerError.token);
-			tokenDisplay = `input ${JSON.stringify(
-				token.text[0],
-			)} (lexer error)`;
+		if (typeof lexerError === 'object' && lexerError && 'token' in lexerError) {
+			const token = lexerError.token as Token;
+			tokenDisplay = `input ${JSON.stringify(token.text[0])} (lexer error)`;
 			lexerMessage = this.lexer.formatError(token, 'Syntax error');
 		} else {
 			tokenDisplay = 'input (lexer error)';
@@ -164,25 +148,19 @@ export class Parser {
 		return this.reportErrorCommon(lexerMessage, tokenDisplay);
 	}
 
-	/** @param {import('moo').Token} token */
-	reportError(token) {
+	reportError(token: Token) {
 		const tokenDisplay =
 			(token.type ? `${token.type} token: ` : '') +
-			JSON.stringify(token.value === undefined ? token : token.value);
+			JSON.stringify(token.value ?? token);
 		const lexerMessage = this.lexer.formatError(token, 'Syntax error');
 		return this.reportErrorCommon(lexerMessage, tokenDisplay);
 	}
 
-	/**
-	 * @param {string} lexerMessage
-	 * @param {string} tokenDisplay
-	 */
-	reportErrorCommon(lexerMessage, tokenDisplay) {
-		/** @type {string[]} */
-		const lines = [];
+	reportErrorCommon(lexerMessage: string, tokenDisplay: string) {
+		const lines: string[] = [];
 		lines.push(lexerMessage);
 		const lastColumnIndex = this.table.length - 2;
-		const lastColumn = /** @type {Column} */ (this.table[lastColumnIndex]);
+		const lastColumn = this.table[lastColumnIndex]!;
 		const expectantStates = lastColumn.states.filter(({rule, dot}) => {
 			const nextSymbol = rule.symbols[dot];
 			return nextSymbol && typeof nextSymbol !== 'string';
@@ -201,18 +179,13 @@ export class Parser {
 			// - which shows you how this state came to be, step by step.
 			// If there is more than one derivation, we only display the first one.
 			const stateStacks = expectantStates.map(
-				(state) =>
-					this.buildFirstStateStack(state, []) ||
-					/** @type {[import('./state.js').State]} */ ([state]),
+				(state) => this.buildFirstStateStack(state, []) ?? ([state] as [State]),
 			);
 
 			// Display each state that is expecting a terminal symbol next.
 			for (const stateStack of stateStacks) {
 				const state = stateStack[0];
-				const nextSymbol =
-					/** @type {import('./symbol.js').RuntimeSymbol} */ (
-						state.rule.symbols[state.dot]
-					);
+				const nextSymbol = state.rule.symbols[state.dot]!;
 				const symbolDisplay = this.getSymbolDisplay(nextSymbol);
 				lines.push(`A ${symbolDisplay} based on:`);
 				this.displayStateStack(stateStack, lines);
@@ -223,11 +196,7 @@ export class Parser {
 		return lines.join('\n');
 	}
 
-	/**
-	 * @param {import("./state.js").State[]} stateStack
-	 * @param {string[]} lines
-	 */
-	displayStateStack(stateStack, lines) {
+	displayStateStack(stateStack: State[], lines: string[]) {
 		let lastDisplay;
 		let sameDisplayCount = 0;
 
@@ -237,9 +206,7 @@ export class Parser {
 				sameDisplayCount++;
 			} else {
 				if (sameDisplayCount > 0) {
-					lines.push(
-						`    ^ ${sameDisplayCount} more lines identical to this`,
-					);
+					lines.push(`    ^ ${sameDisplayCount} more lines identical to this`);
 				}
 
 				sameDisplayCount = 0;
@@ -250,8 +217,7 @@ export class Parser {
 		}
 	}
 
-	/** @param {import('./symbol.js').RuntimeSymbol} symbol */
-	getSymbolDisplay(symbol) {
+	getSymbolDisplay(symbol: RuntimeSymbol) {
 		return getSymbolLongDisplay(symbol);
 	}
 
@@ -264,12 +230,11 @@ export class Parser {
 	 *
 	 * This function needs to be given a starting state and an empty array representing
 	 * the visited states, and it returns an single state stack.
-	 *
-	 * @param {import("./state.js").State} state
-	 * @param {import("./state.js").State[]} visited
-	 * @returns {[import("./state.js").State, ...import("./state.js").State[]] | undefined}
 	 */
-	buildFirstStateStack(state, visited) {
+	buildFirstStateStack(
+		state: State,
+		visited: State[],
+	): [State, ...State[]] | undefined {
 		if (visited.includes(state)) {
 			// Found cycle, return undefined
 			// to eliminate this path from the results, because
@@ -281,14 +246,9 @@ export class Parser {
 			return [state];
 		}
 
-		const previousState = /** @type {import("./state.js").State} */ (
-			state.wantedBy[0]
-		);
+		const previousState = state.wantedBy[0]!;
 		const childVisited = [state, ...visited];
-		const childResult = this.buildFirstStateStack(
-			previousState,
-			childVisited,
-		);
+		const childResult = this.buildFirstStateStack(previousState, childVisited);
 		if (childResult === undefined) {
 			return undefined;
 		}
@@ -297,13 +257,12 @@ export class Parser {
 	}
 
 	save() {
-		const column = /** @type {Column} */ (this.table[this.current]);
+		const column = this.table[this.current]!;
 		column.lexerState = this.lexerState;
 		return column;
 	}
 
-	/** @param {Column} column */
-	restore(column) {
+	restore(column: Column) {
 		const index = column.index;
 		this.current = index;
 		this.table[index] = column;
@@ -339,8 +298,7 @@ export class Parser {
 	}
 }
 
-/** @param {import('./symbol.js').RuntimeSymbol} symbol */
-function getSymbolLongDisplay(symbol) {
+function getSymbolLongDisplay(symbol: RuntimeSymbol) {
 	if (typeof symbol === 'string') {
 		return symbol;
 	}
@@ -357,5 +315,5 @@ function getSymbolLongDisplay(symbol) {
 		return `${symbol.token} token`;
 	}
 
-	throw new Error(`Unknown symbol type: ${symbol}`);
+	throw new Error(`Unknown symbol type: (${typeof symbol}) ${String(symbol)}`);
 }

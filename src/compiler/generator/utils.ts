@@ -1,5 +1,6 @@
-import {Rule} from '../../runtime/rule.js';
-import {LiteralSymbol, TokenSymbol} from '../symbol.js';
+import {Rule as RuntimeRule} from '../../runtime/rule.js';
+import type {Rule as RuleNode} from '../ast.js';
+import {LiteralSymbol, TokenSymbol, type RuntimeSymbol} from '../symbol.js';
 
 export const builtinPostprocessors = new Map([
 	['joiner', "(d) => d.join('')"],
@@ -9,18 +10,13 @@ export const builtinPostprocessors = new Map([
 	['id', 'nearley.id'],
 ]);
 
-/**
- * @param {import('../ast.js').Rule[]} rules
- * @param {string} [defaultPostprocess]
- */
-export function serializeRules(rules, defaultPostprocess) {
+export function serializeRules(rules: RuleNode[], defaultPostprocess?: string) {
 	return `[\n\t${rules
 		.map((rule) => serializeRule(rule, defaultPostprocess))
 		.join(',\n\t')}\n]`;
 }
 
-/** @param {import('../symbol.js').RuntimeSymbol} s */
-export function serializeSymbol(s) {
+export function serializeSymbol(s: RuntimeSymbol) {
 	if (typeof s === 'string') {
 		return JSON.stringify(s);
 	}
@@ -40,12 +36,8 @@ export function serializeSymbol(s) {
 	throw new TypeError(`Unknown symbol ${String(s)}`);
 }
 
-/**
- * @param {import('../ast.js').Rule} rule
- * @param {string} [defaultPostprocess]
- */
-function serializeRule(rule, defaultPostprocess) {
-	let returnValue = `new nearley.${Rule.name}(`;
+function serializeRule(rule: RuleNode, defaultPostprocess?: string) {
+	let returnValue = `new nearley.${RuntimeRule.name}(`;
 	returnValue += JSON.stringify(rule.name);
 	returnValue += `, [${rule.symbols
 		.map((s) => serializeSymbol(s))
