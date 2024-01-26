@@ -51,7 +51,8 @@
 	},
 	"files": [
 		"build/",
-		"!build/compiler/grammar/tsd.*"
+		"!build/compiler/grammar/tsd.*",
+		"!build/**/*.map"
 	],
 	"scripts": {
 		"grammar": "node --enable-source-maps ./build/bin/nearleyc.js -O src/compiler/grammar/index.ne -o tmp && mv tmp src/compiler/grammar/index.ts && echo done",

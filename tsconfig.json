@@ -9,6 +9,7 @@
 		"rootDir": "src",
 		"declaration": true,
 		"outDir": "build",
+		"sourceMap": true,
 		"noPropertyAccessFromIndexSignature": false
 	}
 }
