@@ -157,8 +157,7 @@ export class Parser {
 	}
 
 	reportErrorCommon(lexerMessage: string, tokenDisplay: string) {
-		const lines: string[] = [];
-		lines.push(lexerMessage);
+		const lines = [lexerMessage];
 		const lastColumnIndex = this.table.length - 2;
 		const lastColumn = this.table[lastColumnIndex]!;
 		const expectantStates = lastColumn.states.filter(({rule, dot}) => {

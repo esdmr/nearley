@@ -3,15 +3,11 @@
 import type {Compiler} from './compile.js';
 
 function lintNames({rules}: Compiler) {
-	const all: string[] = [];
-
-	for (const {name} of rules) {
-		all.push(name);
-	}
+	const all = new Set(rules.map((i) => i.name));
 
 	for (const {symbols} of rules) {
 		for (const symbol of symbols) {
-			if (typeof symbol === 'string' && !all.includes(symbol)) {
+			if (typeof symbol === 'string' && !all.has(symbol)) {
 				console.warn(`Undefined symbol \`${symbol}\` used.`);
 			}
 		}
