@@ -58,5 +58,7 @@ function getSymbolShortDisplay(symbol: RuntimeSymbol) {
 		return `%${symbol.token}`;
 	}
 
-	throw new Error(`Unknown symbol type: (${typeof symbol}) ${String(symbol)}`);
+	throw new Error(
+		`Unknown symbol type: ${typeof symbol} ${JSON.stringify(symbol)}`,
+	);
 }

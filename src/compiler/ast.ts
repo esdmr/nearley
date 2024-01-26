@@ -101,7 +101,9 @@ export class Config {
 
 			default: {
 				throw new Error(
-					`Config “${this.name}”: cannot convert “${this.value}” to boolean`,
+					`Config ${JSON.stringify(this.name)}: cannot convert ${JSON.stringify(
+						this.value,
+					)} to boolean`,
 				);
 			}
 		}

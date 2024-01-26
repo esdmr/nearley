@@ -158,10 +158,12 @@ export class Compiler {
 				return this.#buildToken(ruleName, envValue, env);
 			}
 
-			throw new Error(`Unbound variable: ${token.name}`);
+			throw new Error(`Unbound variable: ${JSON.stringify(token.name)}`);
 		}
 
-		throw new Error(`unrecognized token: ${JSON.stringify(token)}`);
+		throw new Error(
+			`unrecognized token: ${typeof token} ${JSON.stringify(token)}`,
+		);
 	}
 
 	#buildStringToken(
@@ -210,7 +212,9 @@ export class Compiler {
 			}
 
 			default: {
-				throw new Error(`Unknown EBNF modifier ${token.modifier}`);
+				throw new Error(
+					`Unknown EBNF modifier ${JSON.stringify(token.modifier)}`,
+				);
 			}
 		}
 	}
@@ -272,11 +276,19 @@ export class Compiler {
 		const macro = this.macros.get(token.name);
 
 		if (!macro) {
-			throw new Error(`Unkown macro: ${token.name} (at ${ruleName})`);
+			throw new Error(
+				`Unkown macro: ${JSON.stringify(token.name)} (at ${JSON.stringify(
+					ruleName,
+				)})`,
+			);
 		}
 
 		if (macro.parameters.length !== token.args.length) {
-			throw new Error('Argument count mismatch.');
+			throw new Error(
+				`Argument count mismatch. Expected ${macro.parameters.length}, got ${
+					token.args.length
+				} (at ${JSON.stringify(ruleName)})`,
+			);
 		}
 
 		const newenv = new Map(env);

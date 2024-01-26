@@ -36,7 +36,7 @@ export function serializeSymbol(s: RuntimeSymbol) {
 		return `new nearley.${TokenSymbol.name}(${JSON.stringify(s.token)})`;
 	}
 
-	throw new TypeError(`Unknown symbol ${String(s)}`);
+	throw new TypeError(`Unknown symbol: ${typeof s} ${JSON.stringify(s)}`);
 }
 
 function serializeRule(rule: RuleNode, defaultPostprocess?: string) {

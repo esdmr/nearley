@@ -40,7 +40,9 @@ export function* tsd({version, body, rules, config}: Compiler) {
 
 			if (!source) {
 				throw new Error(
-					`Invalid builtin postprocess used: ${rule.postprocess}`,
+					`Invalid builtin postprocess used: ${JSON.stringify(
+						rule.postprocess,
+					)}`,
 				);
 			}
 

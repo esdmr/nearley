@@ -7,7 +7,7 @@ export function generate(parser: Compiler) {
 	const generator = generators.get(preprocessor);
 
 	if (!generator) {
-		throw new Error(`No such preprocessor: ${preprocessor}`);
+		throw new Error(`No such preprocessor: ${JSON.stringify(preprocessor)}`);
 	}
 
 	return generator(parser);
