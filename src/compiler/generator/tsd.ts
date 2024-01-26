@@ -32,6 +32,11 @@ export function* tsd({version, body, rules, config}: Compiler) {
 	yield 'const __t = 0 as unknown as nearley.lexer.Token;';
 	yield* body;
 
+	if (config.has('lexer')) {
+		yield '// A lexer was defined, but will not be used in this file.';
+		yield `${String(config.get('lexer'))};`;
+	}
+
 	const map = new Map<string, Rule[]>();
 
 	for (const rule of rules) {
