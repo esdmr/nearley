@@ -43,10 +43,7 @@ jobs:
         run: pnpm install
 
       - name: Build
-        run: pnpm tsc
-
-      - name: Bootstrap
-        run: pnpm bootstrap
+        run: pnpm build
 
       - name: Ensure bootstrap is up-to-date
         run: git diff --quiet HEAD -- src/compiler/grammar
