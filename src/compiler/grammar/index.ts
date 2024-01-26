@@ -1,79 +1,14 @@
 // Generated automatically by nearley, version 3.0.3
 // https://github.com/esdmr/nearley (fork of https://github.com/Hardmath123/nearley)
-import * as nearley from "../runtime/index.js";
+import * as nearley from "../../runtime/index.js";
 
-	import {EbnfSymbol, MacroParameterSymbol, MacroCallSymbol, SubExpressionSymbol} from './symbol.js';
-	import {Expression, Production, RawSourceCode, Include, Config, MacroDefinition} from './ast.js';
+	import {lexer} from './lexer.js';
 
-	function getValue([{value}]: [nearley.lexer.Token]) {
-		return value;
-	}
 
-	function literals(list: string[]) {
-		return Object.fromEntries(list.map(i => [i, {match: i, next: 'main'}]));
-	}
+	import {EbnfSymbol, MacroParameterSymbol, MacroCallSymbol, SubExpressionSymbol} from '../symbol.js';
+	import {Expression, Production, RawSourceCode, Include, Config, MacroDefinition} from '../ast.js';
 
-	const rules = Object.assign(
-		{
-			ws: {match: /\s+/u, lineBreaks: true, next: 'main'},
-			comment: /#.*/u,
-			arrow: {match: /[=-]+>/u, next: 'main'},
-			js: {
-				match: /\{%(?:[^%]|%[^}])*%\}/u,
-				value: (x: string) => x.slice(2, -2),
-				lineBreaks: true,
-			},
-			word: {
-				match: /[\w?+]+/u,
-				next: 'afterWord',
-				type: nearley.lexer.keywords({
-					keyword_null: 'null',
-				}),
-			},
-			string: {
-				match: /"(?:[^\\"\n]|\\["\\/bfnrt]|\\u[a-fA-F\d]{4})*"/u,
-				value: (x: string) => JSON.parse(x),
-				next: 'main',
-			},
-			btstring: {
-				match: /`[^`]*`/u,
-				value: (x: string) => x.slice(1, -1),
-				next: 'main',
-				lineBreaks: true,
-			},
-		},
-		literals([
-			',',
-			'|',
-			'$',
-			'%',
-			'(',
-			')',
-			':?',
-			':*',
-			':+',
-			'@include',
-			'@',
-			']',
-		]),
-	);
-
-	const lexer = nearley.lexer.states({
-		main: {
-			...rules,
-			charclass: {
-				match: /\.|\[(?:\\.|[^\\\n])+?\]/u,
-			},
-		},
-		// Both macro arguments and charclasses are both enclosed in [ ].
-		// We disambiguate based on whether the previous token was a `word`.
-		afterWord: {
-			...rules,
-			'[': {match: '[', next: 'main'},
-		},
-	});
-
-	function insensitive({value}: nearley.lexer.Token) {
+	function insensitive({value}: nearley.LiteralSymbol) {
 		const result = [];
 
 		for (const c of value) {
@@ -108,8 +43,8 @@ export default new nearley.Grammar([
 	new nearley.Rule("wordlist", ["wordlist", "_", new nearley.LiteralSymbol(","), "_", "word"],  d => [...d[0], d[4]] ),
 	new nearley.Rule("completeexpression", ["expr"],  ([a]) => new Expression(a) ),
 	new nearley.Rule("completeexpression", ["expr", "_", "js"],  ([a, _b, c]) => new Expression(a, c) ),
-	new nearley.Rule("expr_member", [new nearley.TokenSymbol("word")],  getValue ),
-	new nearley.Rule("expr_member", [new nearley.TokenSymbol("keyword_null")],  () => '' ),
+	new nearley.Rule("expr_member", [new nearley.TokenSymbol("word")],  ([i]) => String(i) ),
+	new nearley.Rule("expr_member", [new nearley.TokenSymbol("keyword_null")],  ([]) => '' ),
 	new nearley.Rule("expr_member", [new nearley.LiteralSymbol("$"), "word"],  ([, a]) => new MacroParameterSymbol(a) ),
 	new nearley.Rule("expr_member", ["word", new nearley.LiteralSymbol("["), "_", "expressionlist", "_", new nearley.LiteralSymbol("]")],  d => new MacroCallSymbol(d[0], d[3]) ),
 	new nearley.Rule("expr_member$1", [new nearley.LiteralSymbol("i")], nearley.id),
@@ -119,17 +54,17 @@ export default new nearley.Grammar([
 	new nearley.Rule("expr_member", ["charclass"],  nearley.id ),
 	new nearley.Rule("expr_member", [new nearley.LiteralSymbol("("), "_", "expression+", "_", new nearley.LiteralSymbol(")")],  ([_a, _b, c]) => new SubExpressionSymbol(c) ),
 	new nearley.Rule("expr_member", ["expr_member", "_", "ebnf_modifier"],  ([a, _b, c]) => new EbnfSymbol(a, c) ),
-	new nearley.Rule("ebnf_modifier", [new nearley.LiteralSymbol(":+")],  () => EbnfSymbol.plus ),
-	new nearley.Rule("ebnf_modifier", [new nearley.LiteralSymbol(":*")],  () => EbnfSymbol.star ),
-	new nearley.Rule("ebnf_modifier", [new nearley.LiteralSymbol(":?")],  () => EbnfSymbol.opt ),
+	new nearley.Rule("ebnf_modifier", [new nearley.LiteralSymbol(":+")],  ([]) => EbnfSymbol.plus ),
+	new nearley.Rule("ebnf_modifier", [new nearley.LiteralSymbol(":*")],  ([]) => EbnfSymbol.star ),
+	new nearley.Rule("ebnf_modifier", [new nearley.LiteralSymbol(":?")],  ([]) => EbnfSymbol.opt ),
 	new nearley.Rule("expr", ["expr_member"]),
 	new nearley.Rule("expr", ["expr", "ws", "expr_member"],  ([a, _b, c]) => [...a, c] ),
-	new nearley.Rule("word", [new nearley.TokenSymbol("word")],  getValue ),
-	new nearley.Rule("word", [new nearley.TokenSymbol("keyword_null")],  getValue ),
-	new nearley.Rule("string", [new nearley.TokenSymbol("string")],  ([{value}]) => new nearley.LiteralSymbol(value) ),
-	new nearley.Rule("string", [new nearley.TokenSymbol("btstring")],  ([{value}]) => new nearley.LiteralSymbol(value) ),
-	new nearley.Rule("charclass", [new nearley.TokenSymbol("charclass")],  ([a]) => new RegExp(a, 'u') ),
-	new nearley.Rule("js", [new nearley.TokenSymbol("js")],  ([{value}]) => new RawSourceCode(value) ),
+	new nearley.Rule("word", [new nearley.TokenSymbol("word")],  ([i]) => String(i) ),
+	new nearley.Rule("word", [new nearley.TokenSymbol("keyword_null")],  ([i]) => String(i) ),
+	new nearley.Rule("string", [new nearley.TokenSymbol("string")],  ([a]) => new nearley.LiteralSymbol(String(a)) ),
+	new nearley.Rule("string", [new nearley.TokenSymbol("btstring")],  ([a]) => new nearley.LiteralSymbol(String(a)) ),
+	new nearley.Rule("charclass", [new nearley.TokenSymbol("charclass")],  ([a]) => new RegExp(String(a), 'u') ),
+	new nearley.Rule("js", [new nearley.TokenSymbol("js")],  ([a]) => new RawSourceCode(String(a)) ),
 	new nearley.Rule("_$1", ["ws"], nearley.id),
 	new nearley.Rule("_$1", [], (_) => undefined),
 	new nearley.Rule("_", ["_$1"]),

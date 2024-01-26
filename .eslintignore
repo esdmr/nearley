@@ -1,2 +1,2 @@
-src/compiler/nearley-language-bootstrapped.ts
+src/compiler/grammar/*.ts
 build/

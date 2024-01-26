@@ -47,7 +47,7 @@ jobs:
         run: pnpm bootstrap
 
       - name: Ensure bootstrap is up-to-date
-        run: git diff --quiet HEAD -- src/compiler/nearley-language-bootstrapped.ts
+        run: git diff --quiet HEAD -- src/compiler/grammar
 
       - name: Lint
         run: pnpm xo

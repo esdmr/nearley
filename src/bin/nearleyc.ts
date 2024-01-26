@@ -7,7 +7,7 @@ import {Command} from '@commander-js/extra-typings';
 import {compile} from '../compiler/compile.js';
 import {generate} from '../compiler/generate.js';
 import {lint} from '../compiler/lint.js';
-import bootstrap from '../compiler/nearley-language-bootstrapped.js';
+import bootstrap from '../compiler/grammar/index.js';
 import {StreamWrapper} from '../compiler/stream.js';
 import {Parser} from '../runtime/parser.js';
 import type {Node} from '../compiler/ast.js';

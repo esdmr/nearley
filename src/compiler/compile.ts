@@ -13,7 +13,7 @@ import {
 	Expression,
 	type Node,
 } from './ast.js';
-import bootstrap from './nearley-language-bootstrapped.js';
+import bootstrap from './grammar/index.js';
 import {Uniquer} from './uniquer.js';
 import {optimize} from './optimize.js';
 import {

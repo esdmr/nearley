@@ -50,10 +50,13 @@
 		"nearleyc": "build/bin/nearleyc.js"
 	},
 	"files": [
-		"build/"
+		"build/",
+		"!build/compiler/grammar/tsd.*"
 	],
 	"scripts": {
-		"bootstrap": "node ./build/bin/nearleyc.js -O src/compiler/nearley-language-bootstrapped.ne -o tmp && mv tmp src/compiler/nearley-language-bootstrapped.ts && echo bootstrapped ok"
+		"grammar": "node --enable-source-maps ./build/bin/nearleyc.js -O src/compiler/grammar/index.ne -o tmp && mv tmp src/compiler/grammar/index.ts && echo done",
+		"tsd": "node --enable-source-maps ./build/bin/nearleyc.js -O src/compiler/grammar/tsd.ne -o tmp && mv tmp src/compiler/grammar/tsd.ts && echo done",
+		"build": "pnpm tsc && pnpm tsd && pnpm grammar && pnpm tsc --noEmit"
 	},
 	"dependencies": {
 		"@commander-js/extra-typings": "^11.0.0",
