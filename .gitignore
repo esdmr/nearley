@@ -11,4 +11,4 @@ test/grammars/whitespace.js
 *.bat
 npm-debug.log
 sandbox/
-types/
+build/

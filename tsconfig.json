@@ -6,10 +6,10 @@
 	],
 	"compilerOptions": {
 		"checkJs": true,
-		"rootDir": "lib",
+		"rootDir": "src",
 		"declaration": true,
-		"outDir": "types",
-		"emitDeclarationOnly": true,
+		"outDir": "build",
+		"sourceMap": true,
 		"noPropertyAccessFromIndexSignature": false
 	}
 }
