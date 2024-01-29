@@ -1,5 +1,5 @@
 export class Uniquer {
-	#count = new Map<string, number>();
+	readonly #count = new Map<string, number>();
 
 	get(name: string) {
 		const un = (this.#count.get(name) ?? 0) + 1;

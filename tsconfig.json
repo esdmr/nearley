@@ -1,12 +1,12 @@
 {
 	"extends": [
 		"@tsconfig/strictest",
-		"@tsconfig/node18",
-		"@tsconfig/esm"
+		"@tsconfig/node20"
 	],
 	"compilerOptions": {
 		"checkJs": true,
 		"rootDir": "src",
+		"module": "Node16",
 		"declaration": true,
 		"outDir": "build",
 		"sourceMap": true,

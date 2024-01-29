@@ -60,17 +60,16 @@
 		"build": "pnpm tsc && pnpm tsd && pnpm grammar"
 	},
 	"dependencies": {
-		"@commander-js/extra-typings": "^11.0.0",
-		"@types/moo": "^0.5.5",
-		"commander": "^11.0.0",
+		"@commander-js/extra-typings": "^11.1.0",
+		"@types/moo": "^0.5.9",
+		"commander": "^11.1.0",
 		"moo": "^0.5.2"
 	},
 	"devDependencies": {
-		"@tsconfig/esm": "^1.0.4",
-		"@tsconfig/node18": "^18.2.0",
-		"@tsconfig/strictest": "^2.0.1",
-		"@types/node": "18",
-		"typescript": "^5.1.6",
-		"xo": "^0.55.0"
+		"@tsconfig/node20": "^20.1.2",
+		"@tsconfig/strictest": "^2.0.2",
+		"@types/node": "^20.11.10",
+		"typescript": "^5.3.3",
+		"xo": "^0.56.0"
 	}
 }

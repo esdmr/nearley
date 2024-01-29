@@ -91,8 +91,8 @@ export class Parser {
 					expect instanceof RegExp
 						? expect.test(String(value))
 						: expect instanceof TokenSymbol
-						? expect.token === token.type
-						: expect.value === literal
+							? expect.token === token.type
+							: expect.value === literal
 				) {
 					// Add it
 					const next = state.nextState(
