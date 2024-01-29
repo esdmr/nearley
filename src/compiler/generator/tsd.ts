@@ -95,7 +95,7 @@ export function* tsd({version, body, rules, config}: Compiler) {
 								i.includes('$m')
 									? depth - defaultDepth / macroDepth
 									: depth - 1,
-						  )
+							)
 						: ['__t'],
 				),
 			)) {

@@ -4,7 +4,7 @@ import {Writable} from 'node:stream';
 import type {Parser} from '../runtime/parser.js';
 
 export class StreamWrapper extends Writable {
-	#parser;
+	readonly #parser;
 
 	constructor(parser: Parser) {
 		super();

@@ -41,7 +41,7 @@ export class Compiler {
 	start = '';
 	version = 'unknown';
 	alreadyCompiled: string[] = [];
-	#uniqueNames = new Uniquer();
+	readonly #uniqueNames = new Uniquer();
 
 	constructor(structure: Node[], options: NearleyOptions) {
 		Object.seal(this);
