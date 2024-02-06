@@ -4,7 +4,6 @@
 		"@tsconfig/node20"
 	],
 	"compilerOptions": {
-		"checkJs": true,
 		"rootDir": "src",
 		"module": "Node16",
 		"declaration": true,

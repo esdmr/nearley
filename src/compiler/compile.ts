@@ -1,132 +1,112 @@
-import process from 'node:process';
-import {resolve, dirname} from 'node:path';
-import {readFileSync} from 'node:fs';
 import {Parser} from '../runtime/parser.js';
-import type {NearleyOptions} from '../bin/nearleyc.js';
+import {array, id, ignore, string} from '../runtime/postprocess.js';
 import {
-	Rule,
+	LiteralSymbol,
+	NonterminalSymbol,
+	RegExpSymbol,
+	TokenSymbol,
+	type RuntimeSymbol,
+} from '../runtime/symbol.js';
+import {
 	Config,
+	Expression,
 	Include,
 	MacroDefinition,
 	Production,
 	RawSourceCode,
-	Expression,
+	Rule,
 	type Node,
 } from './ast.js';
 import bootstrap from './grammar/index.js';
-import {Uniquer} from './uniquer.js';
-import {optimize} from './optimize.js';
 import {
 	EbnfSymbol,
-	LiteralSymbol,
 	MacroCallSymbol,
 	MacroParameterSymbol,
 	SubExpressionSymbol,
-	TokenSymbol,
 	type CompilerSymbol,
-	type RuntimeSymbol,
 } from './symbol.js';
+import {Uniquer} from './uniquer.js';
 
-export function compile(structure: Node[], options: NearleyOptions) {
-	return new Compiler(structure, options);
-}
+export type CompilerOptions = {
+	readonly version: string;
+	readonly quiet: boolean;
+	readonly readFile: (path: URL) => string;
+};
+
+type Environment = Map<string, NonterminalSymbol>;
 
 export class Compiler {
-	structure;
-	options;
+	readonly options;
 	rules: Rule[] = [];
-	body: string[] = []; // @directives list
-	config = new Map<string, Config>(); // @config value
-	macros = new Map<string, MacroDefinition>();
+	readonly body: string[] = []; // @directives list
+	readonly config = new Map<string, Config>(); // @config value
+	readonly macros = new Map<string, MacroDefinition>();
 	start = '';
-	version = 'unknown';
-	alreadyCompiled: string[] = [];
+	readonly alreadyCompiled = new Set<string>();
 	readonly #uniqueNames = new Uniquer();
 
-	constructor(structure: Node[], options: NearleyOptions) {
+	constructor(options: CompilerOptions) {
 		Object.seal(this);
-		this.structure = structure;
 		this.options = options;
-
-		if (options.version) this.version = options.version;
-
-		this.#compile();
 	}
 
-	#compile() {
-		for (let i = 0; i < this.structure.length; i++) {
-			const item = this.structure[i]!;
+	compile(structure: Node[], path: URL) {
+		for (const node of structure) {
+			if (node instanceof RawSourceCode) {
+				this.body.push(node.source);
+			} else if (node instanceof Include) {
+				const newPath = new URL(node.path, path);
 
-			if (item instanceof RawSourceCode) {
-				if (!this.options.nojs) {
-					this.body.push(item.source);
-				}
-			} else if (item instanceof Include) {
-				const path = resolve(
-					this.options.args[0] ? dirname(this.options.args[0]) : process.cwd(),
-					item.path,
-				);
+				if (this.alreadyCompiled.has(newPath.href)) continue;
+				this.alreadyCompiled.add(newPath.href);
 
-				if (!this.alreadyCompiled.includes(path)) {
-					this.alreadyCompiled.push(path);
-					const f = readFileSync(path).toString();
-					const parser = new Parser(bootstrap);
-					parser.feed(f);
-					this.structure.splice(i + 1, 0, ...(parser.results[0] as Node[]));
-				}
-			} else if (item instanceof MacroDefinition) {
-				this.macros.set(item.name, item);
-			} else if (item instanceof Config) {
-				this.config.set(item.name, item);
+				const parser = new Parser(bootstrap);
+				parser.feed(this.options.readFile(newPath));
+				this.compile(parser.results[0] as Node[], newPath);
+			} else if (node instanceof MacroDefinition) {
+				this.macros.set(node.name, node);
+			} else if (node instanceof Config) {
+				this.config.set(node.name, node);
 			} else {
-				this.#produceRules(item, new Map());
+				this.#produceRules(node, new Map());
 
 				if (!this.start) {
-					this.start = item.name;
+					this.start = node.name;
 				}
 			}
 		}
-
-		if (this.options.optimize) optimize(this);
-		return this;
 	}
 
-	#produceRules(prod: Production, env: Map<string, string>) {
+	#produceRules(prod: Production, env: Environment) {
 		for (const expression of prod.expressions) {
 			this.#produceRule(prod.name, expression, env);
 		}
 	}
 
-	#produceRule(name: string, expression: Expression, env: Map<string, string>) {
+	#produceRule(name: string, expression: Expression, env: Environment) {
 		const symbols = expression.symbols
 			.map((i) => this.#buildToken(name, i, env))
-			.filter(Boolean);
+			.filter((i): i is RuntimeSymbol => i !== undefined);
 
-		this.rules.push(
-			new Rule(
-				name,
-				symbols,
-				this.options.nojs ? undefined : expression.postprocess,
-			),
-		);
+		this.rules.push(new Rule(name, symbols, expression.postprocess));
 	}
 
 	#buildToken(
 		ruleName: string,
 		token: CompilerSymbol,
-		env: Map<string, string>,
-	): RuntimeSymbol {
-		if (typeof token === 'string') {
-			return token;
-		}
-
-		if (token instanceof RegExp) {
+		env: Environment,
+	): RuntimeSymbol | undefined {
+		if (
+			token instanceof NonterminalSymbol ||
+			token instanceof RegExpSymbol ||
+			token instanceof TokenSymbol
+		) {
 			return token;
 		}
 
 		if (token instanceof LiteralSymbol) {
 			if (token.value.length === 0) {
-				return '';
+				return;
 			}
 
 			if (token.value.length === 1 || this.config.has('lexer')) {
@@ -134,10 +114,6 @@ export class Compiler {
 			}
 
 			return this.#buildStringToken(ruleName, token, env);
-		}
-
-		if (token instanceof TokenSymbol) {
-			return token;
 		}
 
 		if (token instanceof SubExpressionSymbol) {
@@ -169,45 +145,45 @@ export class Compiler {
 	#buildStringToken(
 		ruleName: string,
 		{value}: LiteralSymbol,
-		env: Map<string, string>,
+		env: Environment,
 	) {
-		const newname = this.#uniqueNames.get(`${ruleName}$s`);
+		const symbol = new NonterminalSymbol(
+			this.#uniqueNames.get(`${ruleName}$s`),
+		);
 		this.#produceRule(
-			newname,
+			symbol.name,
 			new Expression(
 				value.split('').map((v) => new LiteralSymbol(v)),
-				'joiner',
+				string,
 			),
 			env,
 		);
-		return newname;
+		return symbol;
 	}
 
 	#buildSubExpressionToken(
 		ruleName: string,
 		{expression}: SubExpressionSymbol,
-		env: Map<string, string>,
+		env: Environment,
 	) {
-		const name = this.#uniqueNames.get(`${ruleName}$u`);
-		this.#produceRules(new Production(name, expression), env);
-		return name;
+		const symbol = new NonterminalSymbol(
+			this.#uniqueNames.get(`${ruleName}$u`),
+		);
+		this.#produceRules(new Production(symbol.name, expression), env);
+		return symbol;
 	}
 
-	#buildEbnfToken(
-		ruleName: string,
-		token: EbnfSymbol,
-		env: Map<string, string>,
-	) {
+	#buildEbnfToken(ruleName: string, token: EbnfSymbol, env: Environment) {
 		switch (token.modifier) {
-			case EbnfSymbol.plus: {
+			case '+': {
 				return this.#buildEbnfPlus(ruleName, token, env);
 			}
 
-			case EbnfSymbol.star: {
+			case '*': {
 				return this.#buildEbnfStar(ruleName, token, env);
 			}
 
-			case EbnfSymbol.opt: {
+			case '?': {
 				return this.#buildEbnfOpt(ruleName, token, env);
 			}
 
@@ -219,65 +195,61 @@ export class Compiler {
 		}
 	}
 
-	#buildEbnfPlus(
-		ruleName: string,
-		{expression}: EbnfSymbol,
-		env: Map<string, string>,
-	) {
-		const name = this.#uniqueNames.get(`${ruleName}$e`);
+	#buildEbnfPlus(ruleName: string, {expression}: EbnfSymbol, env: Environment) {
+		const symbol = new NonterminalSymbol(
+			this.#uniqueNames.get(`${ruleName}$e`),
+		);
 		this.#produceRules(
-			new Production(name, [
+			new Production(symbol.name, [
 				new Expression([expression]),
-				new Expression([name, expression], 'arrpush'),
+				new Expression([symbol, expression], array),
 			]),
 			env,
 		);
-		return name;
+		return symbol;
 	}
 
-	#buildEbnfStar(
-		ruleName: string,
-		{expression}: EbnfSymbol,
-		env: Map<string, string>,
-	) {
-		const name = this.#uniqueNames.get(`${ruleName}$e`);
+	#buildEbnfStar(ruleName: string, {expression}: EbnfSymbol, env: Environment) {
+		const symbol = new NonterminalSymbol(
+			this.#uniqueNames.get(`${ruleName}$e`),
+		);
 		this.#produceRules(
-			new Production(name, [
+			new Production(symbol.name, [
 				new Expression([]),
-				new Expression([name, expression], 'arrpush'),
+				new Expression([symbol, expression], array),
 			]),
 			env,
 		);
-		return name;
+		return symbol;
 	}
 
-	#buildEbnfOpt(
-		ruleName: string,
-		{expression}: EbnfSymbol,
-		env: Map<string, string>,
-	) {
-		const name = this.#uniqueNames.get(`${ruleName}$e`);
+	#buildEbnfOpt(ruleName: string, {expression}: EbnfSymbol, env: Environment) {
+		const symbol = new NonterminalSymbol(
+			this.#uniqueNames.get(`${ruleName}$e`),
+		);
 		this.#produceRules(
-			new Production(name, [
-				new Expression([expression], 'id'),
-				new Expression([], 'void'),
+			new Production(symbol.name, [
+				new Expression([expression], id),
+				new Expression([], ignore),
 			]),
 			env,
 		);
-		return name;
+		return symbol;
 	}
 
 	#buildMacroCallToken(
 		ruleName: string,
 		token: MacroCallSymbol,
-		env: Map<string, string>,
+		env: Environment,
 	) {
-		const name = this.#uniqueNames.get(`${ruleName}$m`);
+		const symbol = new NonterminalSymbol(
+			this.#uniqueNames.get(`${ruleName}$m`),
+		);
 		const macro = this.macros.get(token.name);
 
 		if (!macro) {
 			throw new Error(
-				`Unkown macro: ${JSON.stringify(token.name)} (at ${JSON.stringify(
+				`Unknown macro: ${JSON.stringify(token.name)} (at ${JSON.stringify(
 					ruleName,
 				)})`,
 			);
@@ -291,15 +263,17 @@ export class Compiler {
 			);
 		}
 
-		const newenv = new Map(env);
+		const newEnv = new Map(env);
 
 		for (let i = 0; i < macro.parameters.length; i++) {
-			const argrulename = this.#uniqueNames.get(`${ruleName}$n`);
-			newenv.set(macro.parameters[i]!, argrulename);
-			this.#produceRules(new Production(argrulename, [token.args[i]!]), env);
+			const argSymbol = new NonterminalSymbol(
+				this.#uniqueNames.get(`${ruleName}$n`),
+			);
+			this.#produceRules(new Production(argSymbol.name, [token.args[i]!]), env);
+			newEnv.set(macro.parameters[i]!, argSymbol);
 		}
 
-		this.#produceRules(new Production(name, macro.expression), newenv);
-		return name;
+		this.#produceRules(new Production(symbol.name, macro.expression), newEnv);
+		return symbol;
 	}
 }

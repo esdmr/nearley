@@ -1,11 +1,11 @@
 import type {Lexer, LexerState, Token} from 'moo';
 
 export class StreamLexerToken implements Token {
-	text;
-	offset;
-	lineBreaks;
-	line;
-	col;
+	readonly text;
+	readonly offset;
+	readonly lineBreaks;
+	readonly line;
+	readonly col;
 
 	get value() {
 		return this.text;
@@ -26,9 +26,12 @@ export class StreamLexerToken implements Token {
 }
 
 export class StreamLexerState implements LexerState {
-	line;
-	col;
-	state = '';
+	readonly line;
+	readonly col;
+
+	get state() {
+		return '';
+	}
 
 	constructor(line: number, col: number) {
 		Object.seal(this);
@@ -108,15 +111,15 @@ export class StreamLexer implements Lexer {
 	formatError(_token: unknown, message: string) {
 		// Nb. this gets called after consuming the offending token,
 		// so the culprit is index-1
-		const buffer = this.buffer;
-		if (typeof buffer === 'string') {
-			const lines = buffer
+		if (typeof this.buffer === 'string') {
+			const lines = this.buffer
 				.split('\n')
 				.slice(Math.max(0, this.line - 5), this.line);
 
-			let nextLineBreak = buffer.indexOf('\n', this.index);
+			let nextLineBreak = this.buffer.indexOf('\n', this.index);
+
 			if (nextLineBreak === -1) {
-				nextLineBreak = buffer.length;
+				nextLineBreak = this.buffer.length;
 			}
 
 			const col = this.index - this.lastLineBreak;

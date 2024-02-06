@@ -4,6 +4,7 @@ import lexer from 'moo';
 export {lexer};
 export * from './column.js';
 export * from './error.js';
+export * from './fail.js';
 export * from './grammar.js';
 export * from './lexer.js';
 export * from './parser.js';

@@ -41,9 +41,7 @@
 		},
 		"./package.json": "./package.json",
 		"./compiler/*": {
-			"node": {
-				"import": "./build/compiler/*.js"
-			}
+			"import": "./build/compiler/*.js"
 		}
 	},
 	"bin": {

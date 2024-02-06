@@ -24,7 +24,7 @@ const rules = Object.assign(
 		},
 		string: {
 			match: /"(?:[^\\"\n]|\\["\\/bfnrt]|\\u[a-fA-F\d]{4})*"/u,
-			value: (x: string) => String(JSON.parse(x)),
+			value: (x: string) => JSON.parse(x) as string,
 			next: 'main',
 		},
 		btstring: {

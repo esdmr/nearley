@@ -1,19 +1,21 @@
-import {LiteralSymbol, TokenSymbol, type RuntimeSymbol} from './symbol.js';
+import {serializeSymbol} from '../compiler/generator/utils.js';
+import type {fail} from './fail.js';
+import type {RuntimeSymbol} from './symbol.js';
 
 export type PostProcessor = (
 	d: any,
 	ref?: number,
-	error?: Record<string, unknown>,
+	error?: typeof fail,
 	name?: string,
 ) => unknown;
 
-export class Rule {
-	static highestId = 0;
+let highestId = 0;
 
-	id = ++Rule.highestId;
-	name;
-	symbols;
-	postprocess;
+export class Rule {
+	readonly id = ++highestId;
+	readonly name;
+	readonly symbols;
+	readonly postprocess;
 
 	constructor(
 		name: string,
@@ -22,43 +24,21 @@ export class Rule {
 	) {
 		Object.seal(this);
 		this.name = name;
-		this.symbols = symbols; // A list of literal | regex class | nonterminal
+		this.symbols = symbols;
 		this.postprocess = postprocess;
 	}
 
-	toString(withCursorAt: number) {
+	toString(withCursorAt?: number) {
 		const symbolSequence =
 			withCursorAt === undefined
-				? this.symbols.map((s) => getSymbolShortDisplay(s)).join(' ')
+				? this.symbols.map((s) => serializeSymbol(s)).join(' ')
 				: `${this.symbols
 						.slice(0, withCursorAt)
-						.map((s) => getSymbolShortDisplay(s))
+						.map((s) => serializeSymbol(s))
 						.join(' ')} ● ${this.symbols
 						.slice(withCursorAt)
-						.map((s) => getSymbolShortDisplay(s))
+						.map((s) => serializeSymbol(s))
 						.join(' ')}`;
 		return `${this.name} → ${symbolSequence}`;
 	}
-}
-
-function getSymbolShortDisplay(symbol: RuntimeSymbol) {
-	if (typeof symbol === 'string') {
-		return symbol;
-	}
-
-	if (symbol instanceof LiteralSymbol) {
-		return JSON.stringify(symbol.value);
-	}
-
-	if (symbol instanceof RegExp) {
-		return symbol.toString();
-	}
-
-	if (symbol instanceof TokenSymbol) {
-		return `%${symbol.token}`;
-	}
-
-	throw new Error(
-		`Unknown symbol type: ${typeof symbol} ${JSON.stringify(symbol)}`,
-	);
 }

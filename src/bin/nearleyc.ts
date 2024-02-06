@@ -3,14 +3,15 @@
 import fs from 'node:fs';
 import process from 'node:process';
 import assert from 'node:assert';
+import url from 'node:url';
 import {Command} from '@commander-js/extra-typings';
-import {compile} from '../compiler/compile.js';
+import {Compiler} from '../compiler/compile.js';
 import {generate} from '../compiler/generate.js';
 import {lint} from '../compiler/lint.js';
 import bootstrap from '../compiler/grammar/index.js';
-import {StreamWrapper} from '../compiler/stream.js';
 import {Parser} from '../runtime/parser.js';
 import type {Node} from '../compiler/ast.js';
+import {optimize} from '../compiler/optimize.js';
 
 const pkg: unknown = JSON.parse(
 	fs.readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
@@ -32,33 +33,52 @@ const program = new Command()
 		false,
 	)
 	.option('-q, --quiet', 'Suppress linter')
-	.option('--nojs', 'Do not compile postprocessors')
 	.option('-O, --optimize', 'combine equal rules')
 	.parse(process.argv);
 
-export type NearleyOptions = typeof options;
+const options = {
+	...program.opts(),
+	args: program.processedArgs,
+	version: pkg.version,
+};
 
-const options = {...program.opts(), args: program.args, version: pkg.version};
+const input =
+	options.args[0] === '-'
+		? process.stdin
+		: fs.createReadStream(options.args[0]);
 
-const input = options.args[0]
-	? fs.createReadStream(options.args[0])
-	: process.stdin;
+input.setEncoding('utf8');
+
+const parser = new Parser(bootstrap);
+await parser.feedFrom(input);
+parser.feed('\n');
+
+const c = new Compiler({
+	version: options.version,
+	quiet: options.quiet ?? false,
+	readFile: (path) => fs.readFileSync(path, 'utf8'),
+});
+
+c.compile(
+	parser.results[0] as Node[],
+	url.pathToFileURL(
+		options.args[0] === '-' ? `${process.cwd()}/` : options.args[0],
+	),
+);
+
+if (!options.quiet) {
+	lint(c);
+}
+
+if (options.optimize) {
+	optimize(c);
+}
 
 const output: NodeJS.WritableStream =
 	typeof options.out === 'string'
 		? fs.createWriteStream(options.out)
 		: process.stdout;
-const parser = new Parser(bootstrap);
 
-input.pipe(new StreamWrapper(parser)).on('finish', () => {
-	parser.feed('\n');
-	const c = compile(parser.results[0] as Node[], options);
-
-	if (!options.quiet) {
-		lint(c);
-	}
-
-	for (const line of generate(c)) {
-		output.write(line + '\n');
-	}
-});
+for (const line of generate(c)) {
+	output.write(`${line}\n`);
+}

@@ -1,13 +1,25 @@
 import {Rule as RuntimeRule} from '../../runtime/rule.js';
 import type {Rule as RuleNode} from '../ast.js';
-import {LiteralSymbol, TokenSymbol, type RuntimeSymbol} from '../symbol.js';
+import {
+	LiteralSymbol,
+	TokenSymbol,
+	type RuntimeSymbol,
+	NonterminalSymbol,
+	RegExpSymbol,
+} from '../../runtime/symbol.js';
+import {array, id, ignore, string} from '../../runtime/postprocess.js';
 
-export const builtinPostprocessors = new Map([
-	['joiner', "(d) => d.join('')"],
-	['arrconcat', '(d) => [d[0],...d[1]]'],
-	['arrpush', '(d) => [...d[0],d[1]]'],
-	['void', '(_) => undefined'],
-	['id', 'nearley.id'],
+export type BuiltinPostprocessor =
+	| typeof string
+	| typeof array
+	| typeof ignore
+	| typeof id;
+
+export const builtinPostprocessors = new Map<BuiltinPostprocessor, string>([
+	[string, `nearley.${string.name}`],
+	[array, `nearley.${array.name}`],
+	[ignore, `nearley.${ignore.name}`],
+	[id, `nearley.${id.name}`],
 ]);
 
 export function serializeRules(
@@ -20,12 +32,12 @@ export function serializeRules(
 }
 
 export function serializeSymbol(s: RuntimeSymbol) {
-	if (typeof s === 'string') {
-		return JSON.stringify(s);
+	if (s instanceof NonterminalSymbol) {
+		return `new nearley.${NonterminalSymbol.name}(${JSON.stringify(s.name)})`;
 	}
 
-	if (s instanceof RegExp) {
-		return s.toString();
+	if (s instanceof RegExpSymbol) {
+		return `new nearley.${RegExpSymbol.name}(${JSON.stringify(s.pattern)})`;
 	}
 
 	if (s instanceof LiteralSymbol) {
@@ -39,24 +51,21 @@ export function serializeSymbol(s: RuntimeSymbol) {
 	throw new TypeError(`Unknown symbol: ${typeof s} ${JSON.stringify(s)}`);
 }
 
+export function serializePostprocess(
+	postprocess: RuleNode['postprocess'],
+	defaultPostprocess?: string,
+) {
+	return typeof postprocess === 'function'
+		? builtinPostprocessors.get(postprocess)
+		: postprocess?.source ?? defaultPostprocess;
+}
+
 function serializeRule(rule: RuleNode, defaultPostprocess?: string) {
-	let returnValue = `new nearley.${RuntimeRule.name}(`;
-	returnValue += JSON.stringify(rule.name);
-	returnValue += `, [${rule.symbols
-		.map((s) => serializeSymbol(s))
-		.join(', ')}]`;
+	const name = JSON.stringify(rule.name);
+	const symbols = `[${rule.symbols.map((s) => serializeSymbol(s)).join(', ')}]`;
 
-	if (rule.postprocess) {
-		const postprocess =
-			typeof rule.postprocess === 'string'
-				? builtinPostprocessors.get(rule.postprocess)
-				: rule.postprocess.source;
+	let postprocess = serializePostprocess(rule.postprocess, defaultPostprocess);
+	postprocess = postprocess ? `, ${postprocess.trim()}` : '';
 
-		returnValue += `, ${postprocess}`;
-	} else if (defaultPostprocess) {
-		returnValue += `, ${defaultPostprocess}`;
-	}
-
-	returnValue += ')';
-	return returnValue;
+	return `new nearley.${RuntimeRule.name}(${name}, ${symbols}${postprocess})`;
 }

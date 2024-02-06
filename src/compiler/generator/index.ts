@@ -1,5 +1,6 @@
 import {cjs} from './cjs.js';
 import {esm} from './esm.js';
+import {nearley} from './nearley.js';
 import {tsd} from './tsd.js';
 import {typescript} from './typescript.js';
 
@@ -17,4 +18,6 @@ export const generators = new Map([
 	['typescript', typescript],
 	['ts', typescript],
 	['tsd', tsd],
+	['nearley', nearley],
+	['ne', nearley],
 ]);

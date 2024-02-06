@@ -1,5 +1,4 @@
-// Node-only
-
+import {NonterminalSymbol} from '../runtime/symbol.js';
 import type {Compiler} from './compile.js';
 
 function lintNames({rules}: Compiler) {
@@ -7,8 +6,8 @@ function lintNames({rules}: Compiler) {
 
 	for (const {symbols} of rules) {
 		for (const symbol of symbols) {
-			if (typeof symbol === 'string' && !all.has(symbol)) {
-				console.warn(`Undefined symbol \`${symbol}\` used.`);
+			if (symbol instanceof NonterminalSymbol && !all.has(symbol.name)) {
+				console.warn(`Undefined symbol ${symbol.toString()} used.`);
 			}
 		}
 	}

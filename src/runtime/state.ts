@@ -1,4 +1,4 @@
-import {Parser} from './parser.js';
+import {fail} from './fail.js';
 import type {Rule} from './rule.js';
 
 // A State is a rule at a position from a given starting point in the input stream (reference)
@@ -6,11 +6,11 @@ export class State {
 	left: State = this;
 	right: State | StateChild | undefined;
 	data: unknown = [];
-	rule;
-	dot;
-	reference;
-	wantedBy: readonly State[];
-	isComplete;
+	readonly rule;
+	readonly dot;
+	readonly reference;
+	readonly wantedBy: readonly State[];
+	readonly isComplete;
 
 	constructor(
 		rule: Rule,
@@ -68,7 +68,7 @@ export class State {
 			this.data = this.rule.postprocess(
 				this.data,
 				this.reference,
-				Parser.fail,
+				fail,
 				this.rule.name,
 			);
 		}
@@ -76,10 +76,10 @@ export class State {
 }
 
 export class StateChild {
-	data;
-	token;
-	isToken;
-	reference;
+	readonly data;
+	readonly token;
+	readonly isToken;
+	readonly reference;
 
 	constructor(
 		data: unknown,

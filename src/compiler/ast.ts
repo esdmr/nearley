@@ -1,4 +1,9 @@
-import type {CompilerSymbol, RuntimeSymbol} from './symbol.js';
+import type {RuntimeSymbol} from '../runtime/symbol.js';
+import {
+	type BuiltinPostprocessor,
+	serializePostprocess,
+} from './generator/utils.js';
+import type {CompilerSymbol} from './symbol.js';
 
 export type Node =
 	| Production
@@ -9,50 +14,65 @@ export type Node =
 
 export class Rule {
 	name;
-	symbols;
+	readonly symbols;
 	postprocess;
-	/** Specific to tsd generator */
-	postprocessProcessed = false;
 
 	constructor(
 		name: string,
 		symbols: RuntimeSymbol[],
-		postprocess?: RawSourceCode | string,
+		postprocess?: RawSourceCode | BuiltinPostprocessor,
 	) {
 		Object.seal(this);
 		this.name = name;
 		this.symbols = symbols;
 		this.postprocess = postprocess;
 	}
+
+	toString() {
+		const postprocess = serializePostprocess(this.postprocess);
+		return `${this.name} -> ${this.symbols.join(' ') || 'null'}${postprocess ? ` {%${postprocess}%}` : ''}`;
+	}
 }
 
 export class Expression {
-	symbols;
-	postprocess;
+	readonly symbols;
+	readonly postprocess;
 
 	constructor(
-		symbols: readonly CompilerSymbol[],
-		postprocess?: RawSourceCode | string,
+		symbols: ReadonlyArray<CompilerSymbol | undefined>,
+		postprocess?: RawSourceCode | BuiltinPostprocessor,
 	) {
 		Object.seal(this);
-		this.symbols = symbols;
+		this.symbols = symbols.filter((i): i is CompilerSymbol => i !== undefined);
 		this.postprocess = postprocess;
+	}
+
+	toString() {
+		return `${this.symbols.join(' ')} ${serializePostprocess(this.postprocess) ?? ''}`;
 	}
 }
 
 export class Production {
-	name;
-	expressions;
+	readonly name;
+	readonly expressions;
 
 	constructor(name: string, expressions: readonly Expression[]) {
 		Object.seal(this);
 		this.name = name;
 		this.expressions = expressions;
 	}
+
+	toString() {
+		return (
+			this.expressions
+				.map((i) => `${this.name} -> ${i.toString()}`)
+				.join('\n') || `# Empty production ${this.name}`
+		);
+	}
 }
 
 export class RawSourceCode {
-	source;
+	readonly source;
 
 	constructor(source: string) {
 		Object.seal(this);
@@ -65,17 +85,21 @@ export class RawSourceCode {
 }
 
 export class Include {
-	path;
+	readonly path;
 
 	constructor(path: string) {
 		Object.seal(this);
 		this.path = path;
 	}
+
+	toString() {
+		return `@include ${JSON.stringify(this.path)}`;
+	}
 }
 
 export class Config {
-	name;
-	value;
+	readonly name;
+	readonly value;
 
 	constructor(name: string, value: string) {
 		Object.seal(this);
@@ -83,7 +107,7 @@ export class Config {
 		this.value = value;
 	}
 
-	toBoolean() {
+	asBoolean() {
 		switch (this.value.trim().toLowerCase()) {
 			case 'n':
 			case 'no':
@@ -110,14 +134,14 @@ export class Config {
 	}
 
 	toString() {
-		return this.value;
+		return `@${this.name} ${JSON.stringify(this.value)}`;
 	}
 }
 
 export class MacroDefinition {
-	name;
-	parameters;
-	expression;
+	readonly name;
+	readonly parameters;
+	readonly expression;
 
 	constructor(
 		name: string,
@@ -128,5 +152,9 @@ export class MacroDefinition {
 		this.name = name;
 		this.parameters = parameters;
 		this.expression = expression;
+	}
+
+	toString() {
+		return `${this.name}[${this.parameters.join(', ')}] -> ${this.expression.join(' | ')}`;
 	}
 }

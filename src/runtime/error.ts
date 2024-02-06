@@ -1,7 +1,7 @@
 export class ParserError extends Error {
 	override name = 'ParserError';
-	offset;
-	token;
+	readonly offset;
+	readonly token;
 
 	constructor(
 		offset: number,

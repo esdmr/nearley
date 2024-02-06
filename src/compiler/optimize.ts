@@ -1,6 +1,6 @@
+import {NonterminalSymbol} from '../runtime/symbol.js';
 import type {Rule} from './ast.js';
 import type {Compiler} from './compile.js';
-import type {RuntimeSymbol} from './symbol.js';
 import {Uniquer} from './uniquer.js';
 
 /**
@@ -11,7 +11,7 @@ function hashRules(rules: readonly Rule[]) {
 		.map((i) =>
 			JSON.stringify({
 				s: i.symbols.map((j) =>
-					j === i.name ? '' : j instanceof RegExp ? {regex: String(j)} : j,
+					j instanceof NonterminalSymbol && j.name === i.name ? undefined : j,
 				),
 				p: i.postprocess,
 			}),
@@ -139,8 +139,10 @@ function applyRuleReplacements(
 
 	for (const rule of result.rules) {
 		for (const [index, item] of rule.symbols.entries()) {
-			if (typeof item === 'string' && replacements.has(item)) {
-				rule.symbols[index] = replacements.get(item)!;
+			if (item instanceof NonterminalSymbol && replacements.has(item.name)) {
+				rule.symbols[index] = new NonterminalSymbol(
+					replacements.get(item.name)!,
+				);
 			}
 		}
 	}
@@ -154,7 +156,8 @@ function combineRules(result: Compiler) {
 	const ruleHashes = getRuleHashes(rulesByName);
 	const replacements = getRuleCanonicalNames(ruleHashes);
 
-	console.warn('Canonical rule names:', replacements);
+	if (!result.options.quiet)
+		console.warn('Canonical rule names:', replacements);
 	applyRuleReplacements(result, replacements);
 }
 
@@ -162,11 +165,13 @@ function combineRules(result: Compiler) {
  * Get a set of rules which are used by other rules or are the starting rule.
  */
 function getUsedRules(result: Compiler) {
-	const usedSymbols = new Set<RuntimeSymbol>([result.start]);
+	const usedSymbols = new Set<string>([result.start]);
 
 	for (const rule of result.rules) {
 		for (const item of rule.symbols) {
-			usedSymbols.add(item);
+			if (item instanceof NonterminalSymbol) {
+				usedSymbols.add(item.name);
+			}
 		}
 	}
 
@@ -176,10 +181,7 @@ function getUsedRules(result: Compiler) {
 /**
  * Generates the replacement table to get rid of unused rules.
  */
-function getUnusedRuleReplacements(
-	result: Compiler,
-	usedSymbols: Set<RuntimeSymbol>,
-) {
+function getUnusedRuleReplacements(result: Compiler, usedSymbols: Set<string>) {
 	return new Map(
 		result.rules
 			.filter((i) => !usedSymbols.has(i.name))
@@ -194,7 +196,7 @@ function removeUnusedRules(result: Compiler) {
 	const usedSymbols = getUsedRules(result);
 	const replacements = getUnusedRuleReplacements(result, usedSymbols);
 
-	console.warn('Unused rules:', replacements);
+	if (!result.options.quiet) console.warn('Unused rules:', replacements);
 	applyRuleReplacements(result, replacements);
 }
 
@@ -218,13 +220,13 @@ function shortenRuleNameEnding(result: Compiler) {
 		rule.name = minifyName(rule.name);
 
 		for (const [index, item] of rule.symbols.entries()) {
-			if (typeof item === 'string') {
-				rule.symbols[index] = minifyName(item);
+			if (item instanceof NonterminalSymbol) {
+				rule.symbols[index] = new NonterminalSymbol(minifyName(item.name));
 			}
 		}
 	}
 
-	console.warn('Minified names:', minNames);
+	if (!result.options.quiet) console.warn('Minified names:', minNames);
 }
 
 /**

@@ -1,6 +1,7 @@
-import {RawSourceCode, type Rule} from '../ast.js';
+import {NonterminalSymbol} from '../../runtime/symbol.js';
+import type {Rule} from '../ast.js';
 import type {Compiler} from '../compile.js';
-import {builtinPostprocessors} from './utils.js';
+import {serializePostprocess} from './utils.js';
 
 function* cartesianProduct<T>(
 	a?: Iterable<T>,
@@ -17,46 +18,33 @@ function* cartesianProduct<T>(
 	}
 }
 
-export function* tsd({version, body, rules, config}: Compiler) {
-	yield `// Generated automatically by nearley, version ${version}`;
+export function* tsd(compiler: Compiler) {
+	yield `// Generated automatically by nearley, version ${compiler.options.version}`;
 	yield '// https://github.com/esdmr/nearley (fork of https://github.com/Hardmath123/nearley)';
 
-	if (config.get('ts_nocheck')?.toBoolean()) {
+	if (compiler.config.get('ts_nocheck')?.asBoolean()) {
 		yield '// @ts-nocheck';
 	}
 
 	yield `import * as nearley from ${JSON.stringify(
-		config.get('nearley')?.value ?? '@esdmr/nearley',
+		compiler.config.get('nearley')?.value ?? '@esdmr/nearley',
 	)};`;
+
 	yield 'const __a = 0 as unknown as [any, any, any, any, any, any, any, any, ...any[]];';
 	yield 'const __t = 0 as unknown as nearley.lexer.Token;';
-	yield* body;
 
-	if (config.has('lexer')) {
+	yield* compiler.body;
+
+	if (compiler.config.has('lexer')) {
 		yield '// A lexer was defined, but will not be used in this file.';
-		yield `${String(config.get('lexer'))};`;
+		yield `${compiler.config.get('lexer')?.value};`;
 	}
 
 	const map = new Map<string, Rule[]>();
 
-	for (const rule of rules) {
-		if (typeof rule.postprocess === 'string') {
-			const source = builtinPostprocessors.get(rule.postprocess);
-
-			if (!source) {
-				throw new Error(
-					`Invalid builtin postprocess used: ${JSON.stringify(
-						rule.postprocess,
-					)}`,
-				);
-			}
-
-			rule.postprocess = new RawSourceCode(source);
-		} else if (!rule.postprocess) {
-			rule.postprocess = config.get('default_postprocess')?.value;
-		}
-
+	for (const rule of compiler.rules) {
 		const rules = map.get(rule.name);
+
 		if (rules) {
 			rules.push(rule);
 		} else {
@@ -64,44 +52,50 @@ export function* tsd({version, body, rules, config}: Compiler) {
 		}
 	}
 
-	function normalize(string: string) {
-		return string.replaceAll(/\s{2,}/gu, ' ').trim();
-	}
-
 	const defaultDepth = Math.max(
-		Number(config.get('tsd_default_depth')) || 2,
+		Number(compiler.config.get('tsd_default_depth')?.value) || 2,
 		2,
 	);
-	const macroDepth = Math.min(Number(config.get('tsd_macro_depth')) || 1, 1);
+	const macroDepth = Math.min(
+		Number(compiler.config.get('tsd_macro_depth')?.value) || 1,
+		1,
+	);
+	const postprocessProcessed = new Map<Rule, string | undefined>();
 
 	function* expandRules(name: string, depth = defaultDepth): Generator<string> {
 		for (const rule of map.get(name) ?? []) {
-			if (!rule.postprocessProcessed) {
-				rule.postprocess = normalize(String(rule.postprocess ?? ''));
-				if (rule.postprocess) rule.postprocess = `(${rule.postprocess})`;
-				rule.postprocessProcessed = true;
+			if (!postprocessProcessed.has(rule)) {
+				const postprocess = serializePostprocess(
+					rule.postprocess,
+					compiler.config.get('default_postprocess')?.value,
+				);
+				postprocessProcessed.set(
+					rule,
+					postprocess && `(${postprocess.trim()})`,
+				);
 			}
 
 			if (depth <= 1) {
-				yield rule.postprocess ? `${String(rule.postprocess)}(__a)` : '__a';
+				const postprocess = postprocessProcessed.get(rule);
+				yield postprocess ? `${postprocess}(__a)` : '__a';
 				continue;
 			}
 
 			for (const combination of cartesianProduct(
 				...rule.symbols.map((i) =>
-					typeof i === 'string'
+					i instanceof NonterminalSymbol
 						? expandRules(
-								i,
-								i.includes('$m')
+								i.name,
+								i.name.includes('$m')
 									? depth - defaultDepth / macroDepth
 									: depth - 1,
 							)
 						: ['__t'],
 				),
 			)) {
-				yield `${String(rule.postprocess)}([${combination
-					.map((i) => normalize(i))
-					.join(', ')}] as const)`;
+				const args = `[${combination.join(', ')}] as const`;
+				const postprocess = postprocessProcessed.get(rule);
+				yield postprocess ? `${postprocess}(${args})` : args;
 			}
 		}
 	}
@@ -110,7 +104,7 @@ export function* tsd({version, body, rules, config}: Compiler) {
 		yield `// ${name}`;
 
 		for (const line of expandRules(name)) {
-			yield `${line};`;
+			yield `${line.replaceAll(/\s+/gu, ' ').trim()};`;
 		}
 	}
 }
