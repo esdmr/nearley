@@ -111,32 +111,22 @@ export class StreamLexer implements Lexer {
 	formatError(_token: unknown, message: string) {
 		// Nb. this gets called after consuming the offending token,
 		// so the culprit is index-1
-		if (typeof this.buffer === 'string') {
-			const lines = this.buffer
-				.split('\n')
-				.slice(Math.max(0, this.line - 5), this.line);
+		const lines = this.buffer
+			.split('\n')
+			.slice(Math.max(0, this.line - 5), this.line);
 
-			let nextLineBreak = this.buffer.indexOf('\n', this.index);
-
-			if (nextLineBreak === -1) {
-				nextLineBreak = this.buffer.length;
-			}
-
-			const col = this.index - this.lastLineBreak;
-			const lastLineDigits = String(this.line).length;
-			message += ` at line ${this.line} col ${col}:\n\n`;
-			message += lines
-				.map(
-					(line, i) =>
-						`${String(this.line - lines.length + i + 1).padStart(
-							lastLineDigits,
-						)} ${line}`,
-				)
-				.join('\n');
-			message += `\n${''.padStart(lastLineDigits + col)}^\n`;
-			return message;
-		}
-
-		return `${message} at index ${this.index - 1}`;
+		const col = this.index - this.lastLineBreak;
+		const lastLineDigits = String(this.line).length;
+		message += ` at line ${this.line} col ${col}:\n\n`;
+		message += lines
+			.map(
+				(line, i) =>
+					`${String(this.line - lines.length + i + 1).padStart(
+						lastLineDigits,
+					)} ${line}`,
+			)
+			.join('\n');
+		message += `\n${''.padStart(lastLineDigits + col)}^\n`;
+		return message;
 	}
 }

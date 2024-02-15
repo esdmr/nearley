@@ -30,27 +30,26 @@ export class Column {
 		for (const state of this.states) {
 			if (state.isComplete) {
 				state.finish();
-				if (state.data !== fail) {
-					// Complete
-					const wantedBy = state.wantedBy;
-					for (let i = wantedBy.length; i--; ) {
-						// This line is hot
-						const left = wantedBy[i]!;
-						this.complete(left, state);
-					}
+				if (state.data === fail) continue;
 
-					// Special-case nullables
-					if (state.reference === this.index) {
-						// Make sure future predictors of this rule get completed.
-						const exp = state.rule.name;
-						const states = this.completed.get(exp);
+				// Complete
+				const wantedBy = state.wantedBy;
+				for (let i = wantedBy.length; i--; ) {
+					// This line is hot
+					const left = wantedBy[i]!;
+					this.complete(left, state);
+				}
 
-						// eslint-disable-next-line max-depth
-						if (states) {
-							states.push(state);
-						} else {
-							this.completed.set(exp, [state]);
-						}
+				// Special-case nullables
+				if (state.reference === this.index) {
+					// Make sure future predictors of this rule get completed.
+					const exp = state.rule.name;
+					const states = this.completed.get(exp);
+
+					if (states) {
+						states.push(state);
+					} else {
+						this.completed.set(exp, [state]);
 					}
 				}
 			} else {
