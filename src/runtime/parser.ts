@@ -4,7 +4,6 @@ import {LexerError, ParserError} from './error.js';
 import {StreamLexer} from './lexer.js';
 import {type State, StateChild} from './state.js';
 import {
-	LiteralSymbol,
 	TokenSymbol,
 	type RuntimeSymbol,
 	NonterminalSymbol,
@@ -95,7 +94,7 @@ export class Parser {
 			for (const stateStack of stateStacks) {
 				const state = stateStack[0];
 				const nextSymbol = state.rule.symbols[state.dot]!;
-				const symbolDisplay = this.getSymbolDisplay(nextSymbol);
+				const symbolDisplay = nextSymbol.toString('long');
 				lines.push(`A ${symbolDisplay} based on:`);
 				this.displayStateStack(stateStack, lines);
 			}
@@ -124,10 +123,6 @@ export class Parser {
 
 			lastDisplay = display;
 		}
-	}
-
-	getSymbolDisplay(symbol: RuntimeSymbol) {
-		return getSymbolLongDisplay(symbol);
 	}
 
 	/**
@@ -174,8 +169,8 @@ export class Parser {
 	restore(column: Column) {
 		const index = column.index;
 		this.current = index;
+		this.table.length = index + 1;
 		this.table[index] = column;
-		this.table.splice(index + 1);
 		this.lexerState = column.lexerState;
 
 		// Incrementally keep track of results
@@ -293,7 +288,7 @@ export class Parser {
 						: expect.value === literal
 			) {
 				// Add it
-				const next = state.nextState(new StateChild(value, token, true, n - 1));
+				const next = state.nextState(new StateChild(value, token, n - 1));
 				nextColumn.states.push(next);
 			}
 		}
@@ -315,26 +310,4 @@ export class Parser {
 
 		this.current++;
 	}
-}
-
-function getSymbolLongDisplay(symbol: RuntimeSymbol) {
-	if (symbol instanceof NonterminalSymbol) {
-		return symbol.name;
-	}
-
-	if (symbol instanceof RegExpSymbol) {
-		return `character matching ${symbol.pattern}`;
-	}
-
-	if (symbol instanceof LiteralSymbol) {
-		return JSON.stringify(symbol.value);
-	}
-
-	if (symbol instanceof TokenSymbol) {
-		return `${symbol.token} token`;
-	}
-
-	throw new Error(
-		`Unknown symbol type: ${typeof symbol} ${JSON.stringify(symbol)}`,
-	);
 }

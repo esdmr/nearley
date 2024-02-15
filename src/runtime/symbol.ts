@@ -25,8 +25,10 @@ export class RegExpSymbol {
 		this.pattern = pattern;
 	}
 
-	toString() {
-		return this.pattern.source;
+	toString(type?: 'long') {
+		return type
+			? `character matching ${this.pattern.source}`
+			: this.pattern.source;
 	}
 }
 
@@ -51,7 +53,7 @@ export class TokenSymbol {
 		this.token = token;
 	}
 
-	toString() {
-		return `%${this.token}`;
+	toString(type?: 'long') {
+		return type ? `${this.token} token` : `%${this.token}`;
 	}
 }

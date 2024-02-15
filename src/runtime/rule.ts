@@ -1,4 +1,3 @@
-import {serializeSymbol} from '../compiler/generator/utils.js';
 import type {fail} from './fail.js';
 import type {RuntimeSymbol} from './symbol.js';
 
@@ -31,13 +30,9 @@ export class Rule {
 	toString(withCursorAt?: number) {
 		const symbolSequence =
 			withCursorAt === undefined
-				? this.symbols.map((s) => serializeSymbol(s)).join(' ')
-				: `${this.symbols
-						.slice(0, withCursorAt)
-						.map((s) => serializeSymbol(s))
-						.join(' ')} ● ${this.symbols
+				? this.symbols.join(' ')
+				: `${this.symbols.slice(0, withCursorAt).join(' ')} ● ${this.symbols
 						.slice(withCursorAt)
-						.map((s) => serializeSymbol(s))
 						.join(' ')}`;
 		return `${this.name} → ${symbolSequence}`;
 	}
