@@ -9,9 +9,15 @@ export class Column {
 	readonly grammar;
 	readonly index;
 	readonly states: State[] = [];
-	readonly wants = new Map<string, State[]>(); // States indexed by the non-terminal they expect
-	readonly scannable: State[] = []; // List of states that expect a token
-	readonly completed = new Map<string, State[]>(); // States that are nullable
+
+	/** States indexed by the non-terminal they expect */
+	readonly wants = new Map<string, State[]>();
+
+	/** List of states that expect a token */
+	readonly scannable: State[] = [];
+
+	/** States that are nullable */
+	readonly completed = new Map<string, State[]>();
 
 	constructor(grammar: Grammar, index: number) {
 		Object.seal(this);

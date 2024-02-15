@@ -38,8 +38,13 @@ type Environment = Map<string, NonterminalSymbol>;
 export class Compiler {
 	readonly options;
 	rules: Rule[] = [];
-	readonly body: string[] = []; // @directives list
-	readonly config = new Map<string, Config>(); // @config value
+
+	/** `@`directives list */
+	readonly body: string[] = [];
+
+	/** `@config` value */
+	readonly config = new Map<string, Config>();
+
 	readonly macros = new Map<string, MacroDefinition>();
 	start = '';
 	readonly alreadyCompiled = new Set<string>();
